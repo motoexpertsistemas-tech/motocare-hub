@@ -44,6 +44,7 @@ interface ProdutoItem {
   desconto: number;
   subtotal: number;
   _nome?: string;
+  vendedor: string;
   tecnico: string;
 }
 
@@ -454,7 +455,7 @@ export default function NovaOrdemServico() {
   const adicionarProduto = () => {
     setProdutos((prev) => [
       ...prev,
-      { id: Date.now(), produto_id: "", detalhes: "", quantidade: 1, valor_unitario: 0, desconto: 0, subtotal: 0, tecnico: vendedorNome || "" },
+      { id: Date.now(), produto_id: "", detalhes: "", quantidade: 1, valor_unitario: 0, desconto: 0, subtotal: 0, vendedor: vendedorNome || "", tecnico: tecnicoNome || "" },
     ]);
   };
 
@@ -579,7 +580,7 @@ export default function NovaOrdemServico() {
           valor_unitario: p.valor_unitario,
           desconto: p.desconto,
           subtotal: p.subtotal,
-          tecnico: p.tecnico || "",
+          tecnico: `${p.vendedor || ""} / ${p.tecnico || ""}`,
           empresa_id: empresaId,
         })),
         ...servicos.map((s) => ({
@@ -1153,14 +1154,15 @@ export default function NovaOrdemServico() {
             <table className="w-full table-fixed">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left p-2 text-sm text-muted-foreground w-[28%]">Produto*</th>
-                  <th className="text-left p-2 text-sm text-muted-foreground w-[15%]">Detalhes</th>
-                  <th className="text-left p-2 text-sm text-muted-foreground w-[7%]">Qtd*</th>
-                  <th className="text-left p-2 text-sm text-muted-foreground w-[12%]">Valor*</th>
-                  <th className="text-left p-2 text-sm text-muted-foreground w-[11%]">Desconto</th>
-                  <th className="text-left p-2 text-sm text-muted-foreground w-[11%]">Subtotal</th>
+                  <th className="text-left p-2 text-sm text-muted-foreground w-[25%]">Produto*</th>
+                  <th className="text-left p-2 text-sm text-muted-foreground w-[13%]">Detalhes</th>
+                  <th className="text-left p-2 text-sm text-muted-foreground w-[6%]">Qtd*</th>
+                  <th className="text-left p-2 text-sm text-muted-foreground w-[10%]">Valor*</th>
+                  <th className="text-left p-2 text-sm text-muted-foreground w-[10%]">Desconto</th>
+                  <th className="text-left p-2 text-sm text-muted-foreground w-[10%]">Subtotal</th>
                   <th className="text-left p-2 text-sm text-muted-foreground w-[6%]">Ação</th>
                   <th className="text-left p-2 text-sm text-muted-foreground w-[10%]">Vendedor</th>
+                  <th className="text-left p-2 text-sm text-muted-foreground w-[10%]">Mecânico</th>
                 </tr>
               </thead>
               <tbody>
@@ -1230,10 +1232,41 @@ export default function NovaOrdemServico() {
                       <Popover>
                         <PopoverTrigger asChild>
                           <Input
+                            value={produto.vendedor ? produto.vendedor.split(' ')[0] : ''}
+                            onChange={(e) => atualizarProduto(produto.id, "vendedor", e.target.value)}
+                            placeholder="Vend."
+                            className="bg-secondary/50 border-border text-xs cursor-pointer truncate font-medium text-foreground"
+                            onClick={(e) => e.currentTarget.focus()}
+                          />
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0 w-[250px]" align="start">
+                          <Command>
+                            <CommandInput placeholder="Buscar..." />
+                            <CommandList>
+                              <CommandEmpty>Nenhum</CommandEmpty>
+                              <CommandGroup>
+                                {funcionariosLista.map((f) => (
+                                  <CommandItem
+                                    key={f.id}
+                                    onSelect={() => atualizarProduto(produto.id, "vendedor", f.nome)}
+                                  >
+                                    {f.nome}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </td>
+                    <td className="p-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Input
                             value={produto.tecnico ? produto.tecnico.split(' ')[0] : ''}
                             onChange={(e) => atualizarProduto(produto.id, "tecnico", e.target.value)}
-                            placeholder="Vend."
-                            className="bg-secondary/50 border-border text-xs cursor-pointer truncate"
+                            placeholder="Téc."
+                            className="bg-secondary/50 border-border text-xs cursor-pointer truncate font-medium text-foreground"
                             onClick={(e) => e.currentTarget.focus()}
                           />
                         </PopoverTrigger>

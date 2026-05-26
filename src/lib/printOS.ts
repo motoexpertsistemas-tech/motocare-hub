@@ -67,7 +67,7 @@ export async function printOS(osId: string) {
   // Fetch company info
   const { data: loja } = await supabase.from("configuracoes_loja").select("*").limit(1).maybeSingle();
 
-  const pecas = itens.filter((i: any) => i.tipo === "produto");
+  const pecas = itens.filter((i: any) => i.tipo === "peca" || i.tipo === "produto");
   const servicos = itens.filter((i: any) => i.tipo === "servico");
 
   const w = window.open("", "_blank");
@@ -195,21 +195,34 @@ export async function printOS(osId: string) {
   <div class="section-title">📦 Produtos/Peças</div>
   <div class="section-body" style="padding:0">
     <table>
-      <thead><tr><th>#</th><th>Produto</th><th>Det.</th><th class="text-right">Qtd</th><th class="text-right">Valor</th><th class="text-right">Desc.</th><th class="text-right">Subtotal</th><th>Status</th><th>Vendedor</th></tr></thead>
+      <thead><tr><th>#</th><th>Produto</th><th>Det.</th><th class="text-right">Qtd</th><th class="text-right">Valor</th><th class="text-right">Desc.</th><th class="text-right">Subtotal</th><th>Status</th><th>Vendedor</th><th>Mecânico</th></tr></thead>
       <tbody>
-        ${pecas.length === 0 ? '<tr><td colspan="9" style="text-align:center;color:#999;padding:12px">Nenhuma peça adicionada</td></tr>' :
-          pecas.map((p: any, i: number) => `<tr>
-            <td>${i + 1}</td>
-            <td>${p.descricao}</td>
-            <td>${p.detalhes || "—"}</td>
-            <td class="text-right">${p.quantidade}</td>
-            <td class="text-right">R$ ${fmtBRL(p.valor_unitario)}</td>
-            <td class="text-right">${p.desconto ? `R$ ${fmtBRL(p.desconto)}` : "—"}</td>
-            <td class="text-right">R$ ${fmtBRL(p.subtotal)}</td>
-            <td><span class="badge-status ${p.status === 'concluido' ? 'badge-concluido' : 'badge-pendente'}">${p.status === 'concluido' ? 'Concluído' : 'Pendente'}</span></td>
-            <td>${p.tecnico || "—"}</td>
-          </tr>`).join("")}
-        ${pecas.length > 0 ? `<tr class="total-row"><td colspan="6" class="text-right"><strong>Total Peças:</strong></td><td class="text-right"><strong>R$ ${fmtBRL(os.valor_total_pecas)}</strong></td><td colspan="2"></td></tr>` : ""}
+        ${pecas.length === 0 ? '<tr><td colspan="10" style="text-align:center;color:#999;padding:12px">Nenhuma peça adicionada</td></tr>' :
+          pecas.map((p: any, i: number) => {
+            let vend = "—";
+            let tec = "—";
+            const val = p.tecnico || "";
+            if (val.includes(" / ")) {
+              const parts = val.split(" / ");
+              vend = parts[0] || "—";
+              tec = parts[1] || "—";
+            } else if (val) {
+              vend = val;
+            }
+            return `<tr>
+              <td>${i + 1}</td>
+              <td>${p.descricao}</td>
+              <td>${p.detalhes || "—"}</td>
+              <td class="text-right">${p.quantidade}</td>
+              <td class="text-right">R$ ${fmtBRL(p.valor_unitario)}</td>
+              <td class="text-right">${p.desconto ? `R$ ${fmtBRL(p.desconto)}` : "—"}</td>
+              <td class="text-right">R$ ${fmtBRL(p.subtotal)}</td>
+              <td><span class="badge-status ${p.status === 'concluido' ? 'badge-concluido' : 'badge-pendente'}">${p.status === 'concluido' ? 'Concluído' : 'Pendente'}</span></td>
+              <td>${vend}</td>
+              <td>${tec}</td>
+            </tr>`;
+          }).join("")}
+        ${pecas.length > 0 ? `<tr class="total-row"><td colspan="6" class="text-right"><strong>Total Peças:</strong></td><td class="text-right"><strong>R$ ${fmtBRL(os.valor_total_pecas)}</strong></td><td colspan="3"></td></tr>` : ""}
       </tbody>
     </table>
   </div>

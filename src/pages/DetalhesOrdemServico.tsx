@@ -138,6 +138,7 @@ interface EditProdutoItem {
   desconto: number;
   subtotal: number;
   _nome?: string;
+  vendedor: string;
   tecnico: string;
   status: string;
 }
@@ -367,19 +368,29 @@ export default function DetalhesOrdemServico() {
     // Build edit products/services from existing items
     const pecas = itens.filter(i => i.tipo === "peca");
     const servs = itens.filter(i => i.tipo === "servico");
-    setEditProdutos(pecas.map((p, idx) => ({
-      id: Date.now() + idx,
-      db_id: p.id,
-      produto_id: "",
-      detalhes: p.detalhes || "",
-      quantidade: p.quantidade,
-      valor_unitario: p.valor_unitario,
-      desconto: p.desconto || 0,
-      subtotal: p.subtotal,
-      _nome: p.descricao,
-      tecnico: p.tecnico || "",
-      status: p.status || "pendente",
-    })));
+    setEditProdutos(pecas.map((p, idx) => {
+      let vend = "";
+      let tec = p.tecnico || "";
+      if (tec.includes(" / ")) {
+        const parts = tec.split(" / ");
+        vend = parts[0] || "";
+        tec = parts[1] || "";
+      }
+      return {
+        id: Date.now() + idx,
+        db_id: p.id,
+        produto_id: "",
+        detalhes: p.detalhes || "",
+        quantidade: p.quantidade,
+        valor_unitario: p.valor_unitario,
+        desconto: p.desconto || 0,
+        subtotal: p.subtotal,
+        _nome: p.descricao,
+        vendedor: vend,
+        tecnico: tec,
+        status: p.status || "pendente",
+      };
+    }));
     setEditServicos(servs.map((s, idx) => ({
       id: Date.now() + 1000 + idx,
       db_id: s.id,
@@ -398,7 +409,18 @@ export default function DetalhesOrdemServico() {
 
   // Edit mode: product CRUD
   const adicionarEditProduto = () => {
-    setEditProdutos(prev => [...prev, { id: Date.now(), produto_id: "", detalhes: "", quantidade: 1, valor_unitario: 0, desconto: 0, subtotal: 0, tecnico: editVendedor || editTecnico || "", status: "pendente" }]);
+    setEditProdutos(prev => [...prev, {
+      id: Date.now(),
+      produto_id: "",
+      detalhes: "",
+      quantidade: 1,
+      valor_unitario: 0,
+      desconto: 0,
+      subtotal: 0,
+      vendedor: editVendedor || "",
+      tecnico: editTecnico || "",
+      status: "pendente"
+    }]);
   };
   const removerEditProduto = (id: number) => setEditProdutos(prev => prev.filter(p => p.id !== id));
   const atualizarEditProduto = (id: number, campo: string, valor: any, product?: any) => {
@@ -520,7 +542,7 @@ export default function DetalhesOrdemServico() {
           valor_unitario: p.valor_unitario,
           desconto: p.desconto,
           subtotal: p.subtotal,
-          tecnico: p.tecnico || "",
+          tecnico: `${p.vendedor || ""} / ${p.tecnico || ""}`,
           status: p.status || "pendente",
           empresa_id: empresaId,
         })),
@@ -778,20 +800,21 @@ export default function DetalhesOrdemServico() {
               <table className="w-full table-fixed">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left p-2 text-sm text-muted-foreground w-[28%]">Produto*</th>
-                    <th className="text-left p-2 text-sm text-muted-foreground w-[15%]">Detalhes</th>
+                    <th className="text-left p-2 text-sm text-muted-foreground w-[26%]">Produto*</th>
+                    <th className="text-left p-2 text-sm text-muted-foreground w-[11%]">Detalhes</th>
                     <th className="text-left p-2 text-sm text-muted-foreground w-[6%]">Qtd*</th>
                     <th className="text-left p-2 text-sm text-muted-foreground w-[11%]">Valor*</th>
                     <th className="text-left p-2 text-sm text-muted-foreground w-[11%]">Desconto</th>
                     <th className="text-left p-2 text-sm text-muted-foreground w-[11%]">Subtotal</th>
                     <th className="text-left p-2 text-sm text-muted-foreground w-[6%]">Ação</th>
-                    <th className="text-left p-2 text-sm text-muted-foreground w-[12%]">Vendedor</th>
+                    <th className="text-left p-2 text-sm text-muted-foreground w-[9%]">Vendedor</th>
+                    <th className="text-left p-2 text-sm text-muted-foreground w-[9%]">Mecânico</th>
                   </tr>
                 </thead>
                 <tbody>
                   {editProdutos.map((produto) => (
                     <tr key={produto.id} className="border-b border-border">
-                      <td className="p-2">
+                       <td className="p-2">
                         {produto._nome ? (
                           <div className="flex items-center gap-1">
                             <span className="text-sm font-medium truncate">{produto._nome}</span>
@@ -811,7 +834,19 @@ export default function DetalhesOrdemServico() {
                       <td className="p-2">
                         <Popover>
                           <PopoverTrigger asChild>
-                            <Input value={produto.tecnico ? produto.tecnico.split(' ')[0] : ''} onChange={(e) => atualizarEditProduto(produto.id, "tecnico", e.target.value)} placeholder="Vend." className="bg-secondary/50 border-border text-xs cursor-pointer truncate" />
+                            <Input value={produto.vendedor ? produto.vendedor.split(' ')[0] : ''} readOnly placeholder="Vend." className="bg-secondary/50 border-border text-xs cursor-pointer truncate" />
+                          </PopoverTrigger>
+                          <PopoverContent className="p-0 w-[250px]" align="start">
+                            <Command><CommandInput placeholder="Buscar..." /><CommandList><CommandEmpty>Nenhum</CommandEmpty><CommandGroup>
+                              {funcionarios.map(f => (<CommandItem key={f.id} onSelect={() => atualizarEditProduto(produto.id, "vendedor", f.nome)}>{f.nome}</CommandItem>))}
+                            </CommandGroup></CommandList></Command>
+                          </PopoverContent>
+                        </Popover>
+                      </td>
+                      <td className="p-2">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Input value={produto.tecnico ? produto.tecnico.split(' ')[0] : ''} readOnly placeholder="Mec." className="bg-secondary/50 border-border text-xs cursor-pointer truncate" />
                           </PopoverTrigger>
                           <PopoverContent className="p-0 w-[250px]" align="start">
                             <Command><CommandInput placeholder="Buscar..." /><CommandList><CommandEmpty>Nenhum</CommandEmpty><CommandGroup>
@@ -1204,7 +1239,9 @@ export default function DetalhesOrdemServico() {
                   <TableHead>Código</TableHead><TableHead>Descrição</TableHead><TableHead>Detalhes</TableHead>
                   <TableHead className="text-center">Qtd</TableHead><TableHead className="text-right">Valor Unit.</TableHead>
                   <TableHead className="text-center font-semibold">Desconto</TableHead><TableHead className="text-right font-semibold">Subtotal</TableHead>
-                  <TableHead className="text-center w-16 font-semibold">Status</TableHead><TableHead className="w-36 font-semibold">Vendedor</TableHead>
+                  <TableHead className="text-center w-16 font-semibold">Status</TableHead>
+                  <TableHead className="w-28 font-semibold">Vendedor</TableHead>
+                  <TableHead className="w-28 font-semibold">Mecânico</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                   {pecas.map((item) => (
@@ -1221,7 +1258,25 @@ export default function DetalhesOrdemServico() {
                           {item.status === "concluido" ? <CheckCircle2 className="h-5 w-5 mx-auto" /> : <Wrench className="h-4 w-4 mx-auto" />}
                         </span>
                       </TableCell>
-                      <TableCell><span className="text-xs text-muted-foreground">{item.tecnico || "—"}</span></TableCell>
+                      <TableCell>
+                        <span className="text-xs text-muted-foreground">
+                          {(() => {
+                            if (!item.tecnico) return "—";
+                            if (item.tecnico.includes(" / ")) {
+                              return item.tecnico.split(" / ")[0] || "—";
+                            }
+                            return item.tecnico;
+                          })()}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs text-muted-foreground">
+                          {(() => {
+                            if (!item.tecnico || !item.tecnico.includes(" / ")) return "—";
+                            return item.tecnico.split(" / ")[1] || "—";
+                          })()}
+                        </span>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
