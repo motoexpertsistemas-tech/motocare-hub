@@ -195,7 +195,7 @@ export async function printOS(osId: string) {
   <div class="section-title">📦 Produtos/Peças</div>
   <div class="section-body" style="padding:0">
     <table>
-      <thead><tr><th>#</th><th>Produto</th><th>Det.</th><th class="text-right">Qtd</th><th class="text-right">Valor</th><th class="text-right">Desc.</th><th class="text-right">Subtotal</th><th>Status</th><th>Técnico</th></tr></thead>
+      <thead><tr><th>#</th><th>Produto</th><th>Det.</th><th class="text-right">Qtd</th><th class="text-right">Valor</th><th class="text-right">Desc.</th><th class="text-right">Subtotal</th><th>Status</th><th>Vendedor</th></tr></thead>
       <tbody>
         ${pecas.length === 0 ? '<tr><td colspan="9" style="text-align:center;color:#999;padding:12px">Nenhuma peça adicionada</td></tr>' :
           pecas.map((p: any, i: number) => `<tr>

@@ -454,7 +454,7 @@ export default function NovaOrdemServico() {
   const adicionarProduto = () => {
     setProdutos((prev) => [
       ...prev,
-      { id: Date.now(), produto_id: "", detalhes: "", quantidade: 1, valor_unitario: 0, desconto: 0, subtotal: 0, tecnico: tecnicoNome },
+      { id: Date.now(), produto_id: "", detalhes: "", quantidade: 1, valor_unitario: 0, desconto: 0, subtotal: 0, tecnico: vendedorNome || "" },
     ]);
   };
 
@@ -1160,7 +1160,7 @@ export default function NovaOrdemServico() {
                   <th className="text-left p-2 text-sm text-muted-foreground w-[11%]">Desconto</th>
                   <th className="text-left p-2 text-sm text-muted-foreground w-[11%]">Subtotal</th>
                   <th className="text-left p-2 text-sm text-muted-foreground w-[6%]">Ação</th>
-                  <th className="text-left p-2 text-sm text-muted-foreground w-[10%]">Técnico</th>
+                  <th className="text-left p-2 text-sm text-muted-foreground w-[10%]">Vendedor</th>
                 </tr>
               </thead>
               <tbody>
@@ -1232,7 +1232,7 @@ export default function NovaOrdemServico() {
                           <Input
                             value={produto.tecnico ? produto.tecnico.split(' ')[0] : ''}
                             onChange={(e) => atualizarProduto(produto.id, "tecnico", e.target.value)}
-                            placeholder="Téc."
+                            placeholder="Vend."
                             className="bg-secondary/50 border-border text-xs cursor-pointer truncate"
                             onClick={(e) => e.currentTarget.focus()}
                           />

@@ -398,7 +398,7 @@ export default function DetalhesOrdemServico() {
 
   // Edit mode: product CRUD
   const adicionarEditProduto = () => {
-    setEditProdutos(prev => [...prev, { id: Date.now(), produto_id: "", detalhes: "", quantidade: 1, valor_unitario: 0, desconto: 0, subtotal: 0, tecnico: editTecnico, status: "pendente" }]);
+    setEditProdutos(prev => [...prev, { id: Date.now(), produto_id: "", detalhes: "", quantidade: 1, valor_unitario: 0, desconto: 0, subtotal: 0, tecnico: editVendedor || editTecnico || "", status: "pendente" }]);
   };
   const removerEditProduto = (id: number) => setEditProdutos(prev => prev.filter(p => p.id !== id));
   const atualizarEditProduto = (id: number, campo: string, valor: any, product?: any) => {
@@ -785,7 +785,7 @@ export default function DetalhesOrdemServico() {
                     <th className="text-left p-2 text-sm text-muted-foreground w-[11%]">Desconto</th>
                     <th className="text-left p-2 text-sm text-muted-foreground w-[11%]">Subtotal</th>
                     <th className="text-left p-2 text-sm text-muted-foreground w-[6%]">Ação</th>
-                    <th className="text-left p-2 text-sm text-muted-foreground w-[12%]">Técnico</th>
+                    <th className="text-left p-2 text-sm text-muted-foreground w-[12%]">Vendedor</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -811,7 +811,7 @@ export default function DetalhesOrdemServico() {
                       <td className="p-2">
                         <Popover>
                           <PopoverTrigger asChild>
-                            <Input value={produto.tecnico ? produto.tecnico.split(' ')[0] : ''} onChange={(e) => atualizarEditProduto(produto.id, "tecnico", e.target.value)} placeholder="Téc." className="bg-secondary/50 border-border text-xs cursor-pointer truncate" />
+                            <Input value={produto.tecnico ? produto.tecnico.split(' ')[0] : ''} onChange={(e) => atualizarEditProduto(produto.id, "tecnico", e.target.value)} placeholder="Vend." className="bg-secondary/50 border-border text-xs cursor-pointer truncate" />
                           </PopoverTrigger>
                           <PopoverContent className="p-0 w-[250px]" align="start">
                             <Command><CommandInput placeholder="Buscar..." /><CommandList><CommandEmpty>Nenhum</CommandEmpty><CommandGroup>
@@ -1203,8 +1203,8 @@ export default function DetalhesOrdemServico() {
                 <TableHeader><TableRow>
                   <TableHead>Código</TableHead><TableHead>Descrição</TableHead><TableHead>Detalhes</TableHead>
                   <TableHead className="text-center">Qtd</TableHead><TableHead className="text-right">Valor Unit.</TableHead>
-                  <TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Subtotal</TableHead>
-                  <TableHead className="text-center w-16">Status</TableHead><TableHead className="w-36">Mecânico</TableHead>
+                  <TableHead className="text-center font-semibold">Desconto</TableHead><TableHead className="text-right font-semibold">Subtotal</TableHead>
+                  <TableHead className="text-center w-16 font-semibold">Status</TableHead><TableHead className="w-36 font-semibold">Vendedor</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                   {pecas.map((item) => (
