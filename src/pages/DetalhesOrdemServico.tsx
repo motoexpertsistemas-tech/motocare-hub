@@ -73,6 +73,7 @@ interface OSData {
   centro_custo: string | null;
   vendedor: string | null;
   tecnico_responsavel: string | null;
+  condicoes_pagamento?: any;
 }
 
 interface OSItem {
@@ -202,6 +203,54 @@ export default function DetalhesOrdemServico() {
   const [editProdutos, setEditProdutos] = useState<EditProdutoItem[]>([]);
   const [editServicos, setEditServicos] = useState<EditServicoItem[]>([]);
 
+  const [formasPagamento, setFormasPagamento] = useState<any[]>([]);
+  const [editPagamento, setEditPagamento] = useState({
+    gerar_condicoes: false,
+    tipo: "a_vista",
+    forma_pagamento: "",
+    intervalo: 30,
+    qtd_parcelas: "1",
+    data_primeira: new Date().toISOString().split("T")[0],
+    parcelas: [] as any[],
+  });
+
+  const gerarEditParcelasLote = () => {
+    const totalOS = editTotalGeral;
+    const qtd = parseInt(editPagamento.qtd_parcelas) || 1;
+    if (totalOS <= 0 || qtd <= 0) {
+      toast.error("Informe o valor total da OS e a quantidade de parcelas válidas.");
+      return;
+    }
+    
+    const novasParcelas: any[] = [];
+    const base = editPagamento.data_primeira || new Date().toISOString().split("T")[0];
+    const inter = editPagamento.tipo === "a_vista" ? 0 : (editPagamento.intervalo || 30);
+    
+    // Cálculo de cada parcela tratando divisões com centavos
+    const valorParcelaBase = Math.floor((totalOS / qtd) * 100) / 100;
+    const valorUltimaParcela = Math.round((totalOS - (valorParcelaBase * (qtd - 1))) * 100) / 100;
+    
+    for (let i = 0; i < qtd; i++) {
+      const baseDate = new Date(base + "T12:00:00");
+      const dt = new Date(baseDate);
+      dt.setDate(baseDate.getDate() + (inter * i));
+      
+      novasParcelas.push({
+        vencimento: dt.toISOString().split("T")[0],
+        valor: i === qtd - 1 ? valorUltimaParcela : valorParcelaBase,
+        forma_pagamento: editPagamento.forma_pagamento || "",
+        plano_contas: "Prestações de serviços",
+        observacao: "",
+      });
+    }
+    
+    setEditPagamento({
+      ...editPagamento,
+      parcelas: novasParcelas,
+    });
+    toast.success(`${qtd} parcela(s) gerada(s) com sucesso!`);
+  };
+
   // Checklist do veículo
   const [editChecklist, setEditChecklist] = useState<ChecklistCategory[] | null>(null);
   const [editObsCheckin, setEditObsCheckin] = useState("");
@@ -278,6 +327,9 @@ export default function DetalhesOrdemServico() {
     if (id) loadOS();
     supabase.from("funcionarios").select("id, nome").eq("situacao", "Ativo").order("nome").then(({ data }) => {
       if (data) setFuncionarios(data as any);
+    });
+    supabase.from("formas_pagamento").select("*").eq("ativo", true).order("nome").then(({ data }) => {
+      if (data) setFormasPagamento(data || []);
     });
   }, [id]);
 
@@ -404,6 +456,30 @@ export default function DetalhesOrdemServico() {
       status: s.status || "pendente",
     })));
 
+    // Carregar condições de pagamento
+    const condPag = (os as any).condicoes_pagamento;
+    if (Array.isArray(condPag) && condPag.length > 0) {
+      setEditPagamento({
+        gerar_condicoes: true,
+        tipo: condPag.length > 1 ? "parcelado" : "a_vista",
+        forma_pagamento: condPag[0]?.forma_pagamento || "",
+        intervalo: 30,
+        qtd_parcelas: String(condPag.length),
+        data_primeira: condPag[0]?.vencimento || new Date().toISOString().split("T")[0],
+        parcelas: condPag,
+      });
+    } else {
+      setEditPagamento({
+        gerar_condicoes: false,
+        tipo: "a_vista",
+        forma_pagamento: "",
+        intervalo: 30,
+        qtd_parcelas: "1",
+        data_primeira: new Date().toISOString().split("T")[0],
+        parcelas: [],
+      });
+    }
+
     setEditingPayment(true);
   };
 
@@ -522,6 +598,7 @@ export default function DetalhesOrdemServico() {
         observacoes_internas: editObsInternas || null,
         checklist_revisao: editChecklist ? JSON.stringify(editChecklist) : null,
         observacoes_checkin: editObsCheckin || null,
+        condicoes_pagamento: editPagamento.gerar_condicoes ? editPagamento.parcelas : null,
       } as any).eq("id", os.id);
 
       if (error) throw error;
@@ -941,6 +1018,322 @@ export default function DetalhesOrdemServico() {
               <div><Label>Desconto</Label><BRLInput value={editDesconto} onChange={(val) => setEditDesconto(val)} prefix="R$" className="bg-secondary/50 border-border text-right" /></div>
               <div><Label>Valor total</Label><BRLInput value={editTotalGeral} onChange={() => {}} readOnly prefix="R$" className="bg-primary border-primary font-bold text-right text-primary-foreground text-lg" /></div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* ==================== PAGAMENTO ==================== */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">💳 Pagamento</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={editPagamento.gerar_condicoes}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  if (checked && editPagamento.parcelas.length === 0) {
+                    setEditPagamento({
+                      ...editPagamento,
+                      gerar_condicoes: true,
+                      parcelas: [{
+                        vencimento: new Date().toISOString().split("T")[0],
+                        valor: editTotalGeral,
+                        forma_pagamento: "",
+                        plano_contas: "Prestações de serviços",
+                        observacao: "",
+                      }],
+                    });
+                  } else {
+                    setEditPagamento({ ...editPagamento, gerar_condicoes: checked });
+                  }
+                }}
+                className="w-4 h-4"
+              />
+              <span className="text-sm">Gerar condições de pagamento</span>
+            </label>
+
+            {editPagamento.gerar_condicoes && (
+              <>
+                <div className="flex flex-col gap-4 border p-4 rounded-lg bg-accent/10">
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="edit_tipo_pagamento"
+                        value="a_vista"
+                        checked={editPagamento.tipo === "a_vista"}
+                        onChange={(e) => setEditPagamento({ ...editPagamento, tipo: e.target.value, qtd_parcelas: "1" })}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-medium">À vista *</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="edit_tipo_pagamento"
+                        value="parcelado"
+                        checked={editPagamento.tipo === "parcelado"}
+                        onChange={(e) => setEditPagamento({ ...editPagamento, tipo: e.target.value })}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-medium">Parcelado *</span>
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Forma de pagamento</Label>
+                      <Select
+                        value={editPagamento.forma_pagamento}
+                        onValueChange={(val) => {
+                          const fp = formasPagamento.find((f: any) => f.nome === val);
+                          if (fp) {
+                            const diasPrimeira = fp.primeira_parcela_dias || 0;
+                            const dt1 = new Date();
+                            dt1.setDate(dt1.getDate() + diasPrimeira);
+                            const data1Formated = dt1.toISOString().split("T")[0];
+                            const maxParc = fp.max_parcelas || 1;
+
+                            setEditPagamento({
+                              ...editPagamento,
+                              forma_pagamento: val,
+                              intervalo: fp.intervalo_parcelas_dias || 30,
+                              qtd_parcelas: String(maxParc),
+                              data_primeira: data1Formated,
+                              tipo: maxParc > 1 ? "parcelado" : "a_vista",
+                            });
+                          } else {
+                            setEditPagamento({ ...editPagamento, forma_pagamento: val });
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="bg-background border-border text-xs h-9">
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border-border z-50">
+                          {formasPagamento.map((f) => (
+                            <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {editPagamento.tipo === "parcelado" && (
+                      <>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Intervalo parcelas (dias)</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={editPagamento.intervalo}
+                            onChange={(e) => setEditPagamento({ ...editPagamento, intervalo: parseInt(e.target.value) || 30 })}
+                            className="bg-background border-border text-xs h-9"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Qtd. parcelas *</Label>
+                          <Select
+                            value={editPagamento.qtd_parcelas}
+                            onValueChange={(val) => setEditPagamento({ ...editPagamento, qtd_parcelas: val })}
+                          >
+                            <SelectTrigger className="bg-background border-border text-xs h-9">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover border-border z-50">
+                              {(() => {
+                                const fp = formasPagamento.find((f: any) => f.nome === editPagamento.forma_pagamento);
+                                const maxParc = fp ? (fp.max_parcelas || 1) : 12;
+                                const opcoes = [];
+                                for (let n = 1; n <= maxParc; n++) {
+                                  opcoes.push(n);
+                                }
+                                const listaOpcoes = opcoes.length > 0 ? opcoes : [1];
+                                return listaOpcoes.map((n) => (
+                                  <SelectItem key={n} value={String(n)}>{n} vezes</SelectItem>
+                                ));
+                              })()}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="space-y-1 col-span-1">
+                      <Label className="text-xs">Data 1ª parcela *</Label>
+                      <Input
+                        type="date"
+                        value={editPagamento.data_primeira}
+                        onChange={(e) => setEditPagamento({ ...editPagamento, data_primeira: e.target.value })}
+                        className="bg-background border-border text-xs h-9"
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={gerarEditParcelasLote}
+                      variant="outline"
+                      className="bg-foreground text-background hover:bg-foreground/90 h-9 font-semibold text-xs gap-1.5"
+                    >
+                      🔄 Gerar
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto mt-4">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left p-2 text-sm text-muted-foreground">Vencimento*</th>
+                        <th className="text-left p-2 text-sm text-muted-foreground">Valor*</th>
+                        <th className="text-left p-2 text-sm text-muted-foreground">Forma de pagamento *</th>
+                        <th className="text-left p-2 text-sm text-muted-foreground">Plano de contas</th>
+                        <th className="text-left p-2 text-sm text-muted-foreground">Observação</th>
+                        <th className="text-left p-2 text-sm text-muted-foreground w-20">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {editPagamento.parcelas.map((parcela, index) => (
+                        <tr key={index} className="border-b border-border">
+                          <td className="p-2">
+                            <Input
+                              type="date"
+                              value={parcela.vencimento}
+                              onChange={(e) => {
+                                const novasParcelas = [...editPagamento.parcelas];
+                                novasParcelas[index].vencimento = e.target.value;
+                                setEditPagamento({ ...editPagamento, parcelas: novasParcelas });
+                              }}
+                              className="bg-secondary/50 border-border text-sm"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <BRLInput
+                              value={parcela.valor}
+                              onChange={(val) => {
+                                const novasParcelas = [...editPagamento.parcelas];
+                                novasParcelas[index].valor = parseFloat(val);
+                                setEditPagamento({ ...editPagamento, parcelas: novasParcelas });
+                              }}
+                              prefix="R$"
+                              className="bg-secondary/50 border-border text-sm"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Select
+                              value={parcela.forma_pagamento}
+                              onValueChange={(val) => {
+                                const novasParcelas = [...editPagamento.parcelas];
+                                novasParcelas[index].forma_pagamento = val;
+                                setEditPagamento({ ...editPagamento, parcelas: novasParcelas });
+                              }}
+                            >
+                              <SelectTrigger className="bg-secondary/50 border-border text-sm">
+                                <SelectValue placeholder="Selecione..." />
+                              </SelectTrigger>
+                              <SelectContent className="bg-popover border-border z-50">
+                                {formasPagamento.map((f) => (
+                                  <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="p-2">
+                            <Select
+                              value={parcela.plano_contas}
+                              onValueChange={(val) => {
+                                const novasParcelas = [...editPagamento.parcelas];
+                                novasParcelas[index].plano_contas = val;
+                                setEditPagamento({ ...editPagamento, parcelas: novasParcelas });
+                              }}
+                            >
+                              <SelectTrigger className="bg-secondary/50 border-border text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-popover border-border z-50">
+                                <SelectItem value="Prestações de serviços">Prestações de serviços</SelectItem>
+                                <SelectItem value="Vendas">Vendas</SelectItem>
+                                <SelectItem value="Outros">Outros</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              value={parcela.observacao}
+                              onChange={(e) => {
+                                const novasParcelas = [...editPagamento.parcelas];
+                                novasParcelas[index].observacao = e.target.value;
+                                setEditPagamento({ ...editPagamento, parcelas: novasParcelas });
+                              }}
+                              placeholder="Obs..."
+                              className="bg-secondary/50 border-border text-sm"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const novasParcelas = editPagamento.parcelas.filter((_, i) => i !== index);
+                                setEditPagamento({ ...editPagamento, parcelas: novasParcelas });
+                              }}
+                              className="text-destructive hover:bg-destructive/10"
+                            >
+                              <X size={16} />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {(() => {
+                  const somaParcelas = editPagamento.parcelas.reduce((s, p) => s + (p.valor || 0), 0);
+                  const diferenca = Math.abs(somaParcelas - editTotalGeral);
+                  const hasDiferenca = diferenca > 0.01;
+                  return (
+                    <div className="flex justify-between items-center bg-secondary/35 p-3 rounded-lg border border-border mt-3 text-xs select-none">
+                      <div className="flex gap-2">
+                        <span className="font-semibold">Soma das Parcelas:</span>
+                        <span className="font-mono text-primary font-bold">R$ {somaParcelas.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                        <span className="text-muted-foreground">/</span>
+                        <span className="font-semibold">Total OS:</span>
+                        <span className="font-mono font-bold">R$ {editTotalGeral.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      {hasDiferenca && (
+                        <span className="text-destructive font-bold animate-pulse flex items-center gap-1">
+                          ⚠️ Diferença: R$ {diferenca.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => {
+                    setEditPagamento({
+                      ...editPagamento,
+                      parcelas: [...editPagamento.parcelas, {
+                        vencimento: new Date().toISOString().split("T")[0],
+                        valor: 0,
+                        forma_pagamento: "",
+                        plano_contas: "Prestações de serviços",
+                        observacao: "",
+                      }],
+                    });
+                  }}
+                >
+                  <Plus size={16} className="mr-2" />
+                  Adicionar parcela
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -1379,6 +1772,53 @@ export default function DetalhesOrdemServico() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Condições de Pagamento */}
+      {(os as any).condicoes_pagamento && Array.isArray((os as any).condicoes_pagamento) && (os as any).condicoes_pagamento.length > 0 && (
+        <Card className="glass-panel">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-primary" /> Condições de Pagamento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Parcela</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Forma de Pagamento</TableHead>
+                    <TableHead>Plano de Contas</TableHead>
+                    <TableHead>Observação</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(os as any).condicoes_pagamento.map((p: any, idx: number) => (
+                    <TableRow key={idx}>
+                      <TableCell className="font-semibold text-xs text-muted-foreground">{idx + 1}ª Parcela</TableCell>
+                      <TableCell>{p.vencimento ? new Date(p.vencimento + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</TableCell>
+                      <TableCell>{p.forma_pagamento || "—"}</TableCell>
+                      <TableCell>{p.plano_contas || "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{p.observacao || "—"}</TableCell>
+                      <TableCell className="text-right font-mono font-semibold">R$ {fmt(p.valor)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="flex justify-between items-center bg-secondary/35 p-3 rounded-lg border border-border mt-3 text-xs select-none">
+              <div className="flex gap-2">
+                <span className="font-semibold">Soma das Parcelas:</span>
+                <span className="font-mono text-primary font-bold">
+                  R$ {((os as any).condicoes_pagamento.reduce((s: number, p: any) => s + (p.valor || 0), 0) as number).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Observações */}
       {(os.observacoes || os.observacoes_internas) && (

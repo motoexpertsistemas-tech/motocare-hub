@@ -193,6 +193,10 @@ export default function NovaOrdemServico() {
   const [pagamento, setPagamento] = useState({
     gerar_condicoes: false,
     tipo: "a_vista",
+    forma_pagamento: "",
+    intervalo: 30,
+    qtd_parcelas: "1",
+    data_primeira: new Date().toISOString().split("T")[0],
     parcelas: [] as Parcela[],
   });
 
@@ -204,6 +208,43 @@ export default function NovaOrdemServico() {
       return data || [];
     },
   });
+
+  const gerarParcelasLote = () => {
+    const totalOS = totais.total;
+    const qtd = parseInt(pagamento.qtd_parcelas) || 1;
+    if (totalOS <= 0 || qtd <= 0) {
+      toast({ title: "Informe o valor total da OS e a quantidade de parcelas válidas.", variant: "destructive" });
+      return;
+    }
+    
+    const novasParcelas: Parcela[] = [];
+    const base = pagamento.data_primeira || new Date().toISOString().split("T")[0];
+    const inter = pagamento.tipo === "a_vista" ? 0 : (pagamento.intervalo || 30);
+    
+    // Cálculo de cada parcela tratando divisões com centavos
+    const valorParcelaBase = Math.floor((totalOS / qtd) * 100) / 100;
+    const valorUltimaParcela = Math.round((totalOS - (valorParcelaBase * (qtd - 1))) * 100) / 100;
+    
+    for (let i = 0; i < qtd; i++) {
+      const baseDate = new Date(base + "T12:00:00");
+      const dt = new Date(baseDate);
+      dt.setDate(baseDate.getDate() + (inter * i));
+      
+      novasParcelas.push({
+        vencimento: dt.toISOString().split("T")[0],
+        valor: i === qtd - 1 ? valorUltimaParcela : valorParcelaBase,
+        forma_pagamento: pagamento.forma_pagamento || "",
+        plano_contas: "Prestações de serviços",
+        observacao: "",
+      });
+    }
+    
+    setPagamento({
+      ...pagamento,
+      parcelas: novasParcelas,
+    });
+    toast({ title: `✅ ${qtd} parcela(s) gerada(s) com sucesso!` });
+  };
 
   // Anexos
   const [fotosCheckin, setFotosCheckin] = useState<File[]>([]);
@@ -563,6 +604,7 @@ export default function NovaOrdemServico() {
           checklist_revisao: checkinData?.checklist ? JSON.stringify(checkinData.checklist) : null,
           observacoes_checkin: checkinData?.observacoes_checkin || null,
           empresa_id: empresaId,
+          condicoes_pagamento: pagamento.gerar_condicoes ? pagamento.parcelas : [],
         } as any)
         .select()
         .single();
@@ -1536,32 +1578,132 @@ export default function NovaOrdemServico() {
 
           {pagamento.gerar_condicoes && (
             <>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="tipo_pagamento"
-                    value="a_vista"
-                    checked={pagamento.tipo === "a_vista"}
-                    onChange={(e) => setPagamento({ ...pagamento, tipo: e.target.value })}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm">À vista *</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="tipo_pagamento"
-                    value="parcelado"
-                    checked={pagamento.tipo === "parcelado"}
-                    onChange={(e) => setPagamento({ ...pagamento, tipo: e.target.value })}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm">Parcelado *</span>
-                </label>
+              <div className="flex flex-col gap-4 border p-4 rounded-lg bg-accent/10">
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="tipo_pagamento"
+                      value="a_vista"
+                      checked={pagamento.tipo === "a_vista"}
+                      onChange={(e) => setPagamento({ ...pagamento, tipo: e.target.value, qtd_parcelas: "1" })}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm font-medium">À vista *</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="tipo_pagamento"
+                      value="parcelado"
+                      checked={pagamento.tipo === "parcelado"}
+                      onChange={(e) => setPagamento({ ...pagamento, tipo: e.target.value })}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm font-medium">Parcelado *</span>
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Forma de pagamento</Label>
+                    <Select
+                      value={pagamento.forma_pagamento}
+                      onValueChange={(val) => {
+                        const fp = formasPagamentoDB.find((f: any) => f.nome === val);
+                        if (fp) {
+                          const diasPrimeira = fp.primeira_parcela_dias || 0;
+                          const dt1 = new Date();
+                          dt1.setDate(dt1.getDate() + diasPrimeira);
+                          const data1Formated = dt1.toISOString().split("T")[0];
+                          const maxParc = fp.max_parcelas || 1;
+
+                          setPagamento({
+                            ...pagamento,
+                            forma_pagamento: val,
+                            intervalo: fp.intervalo_parcelas_dias || 30,
+                            qtd_parcelas: String(maxParc),
+                            data_primeira: data1Formated,
+                            tipo: maxParc > 1 ? "parcelado" : "a_vista",
+                          });
+                        } else {
+                          setPagamento({ ...pagamento, forma_pagamento: val });
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="bg-background border-border text-xs h-9">
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50">
+                        {formasPagamentoDB.map((f) => (
+                          <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {pagamento.tipo === "parcelado" && (
+                    <>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Intervalo parcelas (dias)</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={pagamento.intervalo}
+                          onChange={(e) => setPagamento({ ...pagamento, intervalo: parseInt(e.target.value) || 30 })}
+                          className="bg-background border-border text-xs h-9"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Qtd. parcelas *</Label>
+                        <Select
+                          value={pagamento.qtd_parcelas}
+                          onValueChange={(val) => setPagamento({ ...pagamento, qtd_parcelas: val })}
+                        >
+                          <SelectTrigger className="bg-background border-border text-xs h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border-border z-50">
+                            {(() => {
+                              const fp = formasPagamentoDB.find((f: any) => f.nome === pagamento.forma_pagamento);
+                              const maxParc = fp ? (fp.max_parcelas || 1) : 12;
+                              const opcoes = [];
+                              for (let n = 1; n <= maxParc; n++) {
+                                opcoes.push(n);
+                              }
+                              const listaOpcoes = opcoes.length > 0 ? opcoes : [1];
+                              return listaOpcoes.map((n) => (
+                                <SelectItem key={n} value={String(n)}>{n} vezes</SelectItem>
+                              ));
+                            })()}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="space-y-1 col-span-1">
+                    <Label className="text-xs">Data 1ª parcela *</Label>
+                    <Input
+                      type="date"
+                      value={pagamento.data_primeira}
+                      onChange={(e) => setPagamento({ ...pagamento, data_primeira: e.target.value })}
+                      className="bg-background border-border text-xs h-9"
+                    />
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={gerarParcelasLote}
+                    variant="outline"
+                    className="bg-foreground text-background hover:bg-foreground/90 h-9 font-semibold text-xs gap-1.5"
+                  >
+                    🔄 Gerar
+                  </Button>
+                </div>
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto mt-4">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border">
@@ -1669,6 +1811,29 @@ export default function NovaOrdemServico() {
                   </tbody>
                 </table>
               </div>
+
+              {(() => {
+                const somaParcelas = pagamento.parcelas.reduce((s, p) => s + (p.valor || 0), 0);
+                const diferenca = Math.abs(somaParcelas - totais.total);
+                const hasDiferenca = diferenca > 0.01;
+                return (
+                  <div className="flex justify-between items-center bg-secondary/35 p-3 rounded-lg border border-border mt-3 text-xs select-none">
+                    <div className="flex gap-2">
+                      <span className="font-semibold">Soma das Parcelas:</span>
+                      <span className="font-mono text-primary font-bold">R$ {somaParcelas.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                      <span className="text-muted-foreground">/</span>
+                      <span className="font-semibold">Total OS:</span>
+                      <span className="font-mono font-bold">R$ {totais.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    {hasDiferenca && (
+                      <span className="text-destructive font-bold animate-pulse flex items-center gap-1">
+                        ⚠️ Diferença: R$ {diferenca.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
+
               <Button
                 type="button"
                 variant="outline"
