@@ -489,36 +489,20 @@ function KioskDashboard({ mechanicName, onLogout }: { mechanicName: string; onLo
 
                 {/* Services */}
                 {(() => {
-                  const produtos = osServicos.filter((s) => s.tipo === "produto");
-                  const servicos = osServicos.filter((s) => s.tipo !== "produto");
+                  const servicos = osServicos.filter((s) => s.tipo === "servico");
                   return (
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Serviços</p>
-                        {servicos.length > 0 ? (
-                          servicos.map((s) => (
-                            <div key={s.id} className="flex items-center gap-2 text-sm">
-                              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                              {s.descricao}
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-xs text-muted-foreground">Nenhum serviço cadastrado</p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Produtos / Peças</p>
-                        {produtos.length > 0 ? (
-                          produtos.map((s) => (
-                            <div key={s.id} className="flex items-center gap-2 text-sm">
-                              <div className="h-1.5 w-1.5 rounded-full bg-accent-foreground/60" />
-                              {s.descricao} {s.quantidade > 1 ? `(x${s.quantidade})` : ""}
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-xs text-muted-foreground">Nenhum produto cadastrado</p>
-                        )}
-                      </div>
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Serviços</p>
+                      {servicos.length > 0 ? (
+                        servicos.map((s) => (
+                          <div key={s.id} className="flex items-center gap-2 text-sm">
+                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                            {s.descricao}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Nenhum serviço cadastrado</p>
+                      )}
                     </div>
                   );
                 })()}
