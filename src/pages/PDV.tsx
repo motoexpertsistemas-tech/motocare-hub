@@ -361,6 +361,21 @@ export default function PDV() {
     });
   };
 
+  const getProximoNumeroVenda = () => {
+    try {
+      const vendasSalvas = JSON.parse(localStorage.getItem("vendas_balcao") || "[]");
+      const numerosValidos = vendasSalvas
+        .map((v: any) => Number(v.numero) || 0)
+        .filter((num: number) => num < 10000);
+      if (numerosValidos.length === 0) {
+        return 1;
+      }
+      return Math.max(...numerosValidos, 0) + 1;
+    } catch {
+      return 1;
+    }
+  };
+
   const finalizarVendaMulti = async () => {
     if (pagamentos.length === 0) { toast.error("Adicione pelo menos uma forma de pagamento"); return; }
     if (pendente > 0.01) { toast.error(`Ainda falta R$ ${pendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} a ser informado`); return; }
@@ -368,7 +383,7 @@ export default function PDV() {
     setSaving(true);
 
     const now = new Date();
-    const vendaNumero = Math.floor(Math.random() * 90000) + 10000;
+    const vendaNumero = getProximoNumeroVenda();
     const formasResumo = pagamentos.map(p => `${p.forma} R$${p.valor.toFixed(2)}`).join(" / ");
 
     // Save sale as "Em andamento" to localStorage (no caixa registration yet)
@@ -418,7 +433,7 @@ export default function PDV() {
     setSaving(true);
 
     const now = new Date();
-    const vendaNumero = Math.floor(Math.random() * 90000) + 10000;
+    const vendaNumero = getProximoNumeroVenda();
 
     // Save sale as "Em andamento" to localStorage (no caixa registration yet)
     const novaVenda = {
@@ -710,7 +725,7 @@ export default function PDV() {
 
                             setSaving(true);
                             const now = new Date();
-                            const vendaNumero = Math.floor(Math.random() * 90000) + 10000;
+                            const vendaNumero = getProximoNumeroVenda();
                             const formasResumo = `${nome} R$${total.toFixed(2)}`;
                             
                             const trocoCalculado = (nomeLower.includes("dinheiro") && valorDigitado > total) ? (valorDigitado - total) : 0;

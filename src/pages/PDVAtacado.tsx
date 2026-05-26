@@ -190,10 +190,25 @@ export default function PDVAtacado() {
     });
   };
 
+  const getProximoNumeroVendaAtacado = () => {
+    try {
+      const vendasSalvas = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      const numerosValidos = vendasSalvas
+        .map((v: any) => Number(v.numero) || 0)
+        .filter((num: number) => num < 10000);
+      if (numerosValidos.length === 0) {
+        return 1;
+      }
+      return Math.max(...numerosValidos, 0) + 1;
+    } catch {
+      return 1;
+    }
+  };
+
   const finalizarVenda = async (formasResumo: string, pagamentosList: PagamentoItem[]) => {
     setSaving(true);
     const now = new Date();
-    const vendaNumero = Math.floor(Math.random() * 90000) + 10000;
+    const vendaNumero = getProximoNumeroVendaAtacado();
 
     const novaVenda = {
       id: crypto.randomUUID(),

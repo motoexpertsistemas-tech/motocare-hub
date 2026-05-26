@@ -604,7 +604,7 @@ export default function OrdensServico() {
 
       {/* Real OS from database */}
       {realOS.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           <h2 className="col-span-full text-sm font-bold text-muted-foreground uppercase tracking-wider">Ordens de Serviço</h2>
           {realOS
             .filter((os) => {
@@ -698,35 +698,38 @@ export default function OrdensServico() {
                       </div>
                     </div>
 
-                    {/* Info row: Mecânico, Previsão, Check-in, Valor */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 border-t border-border/50">
-                      <div className="px-5 py-3 border-r border-b sm:border-b-0 border-border/50">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                          <Wrench className="h-3 w-3" /> Mecânico
-                        </p>
-                        <p className="text-sm font-bold mt-1 truncate">{mecanico || "—"}</p>
+                    {/* Info rows: Técnico (full width) + Previsão | Total */}
+                    <div className="border-t border-border/50">
+                      {/* Técnico em linha própria - nome completo sempre visível */}
+                      <div className="px-4 py-2.5 border-b border-border/50 flex items-center gap-3">
+                        <Wrench className="h-4 w-4 text-primary shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                            Técnico Responsável
+                          </p>
+                          <p className="text-sm font-bold text-foreground break-words">{mecanico || "—"}</p>
+                        </div>
                       </div>
-                      <div className="px-5 py-3 sm:border-r border-b sm:border-b-0 border-border/50">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                          <Clock className="h-3 w-3" /> Previsão
-                        </p>
-                        <p className="text-sm font-bold mt-1 truncate">
-                          {os.data_prevista_conclusao ? new Date(os.data_prevista_conclusao).toLocaleDateString("pt-BR") : "—"}
-                        </p>
-                      </div>
-                      <div className="px-5 py-3 border-r border-border/50">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                          <Camera className="h-3 w-3" /> Check-in
-                        </p>
-                        <p className="text-sm font-bold mt-1">{os.observacoes_checkin ? "✓" : "—"}</p>
-                      </div>
-                      <div className="px-5 py-3 bg-emerald-50 dark:bg-emerald-950/30 sm:rounded-br-lg">
-                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 font-semibold">
-                          <DollarSign className="h-3 w-3" /> Valor
-                        </p>
-                        <p className="text-sm font-bold font-mono mt-1 text-emerald-700 dark:text-emerald-300 truncate">
-                          {(os.valor_total || 0) > 0 ? `R$ ${Number(os.valor_total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
-                        </p>
+                      {/* Previsão + Total */}
+                      <div className="grid grid-cols-2">
+                        <div className="px-4 py-2.5 border-r border-border/50">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                            <Clock className="h-3 w-3 shrink-0" /> Previsão
+                          </p>
+                          <p className="text-sm font-bold mt-1 truncate">
+                            {os.data_prevista_conclusao ? new Date(os.data_prevista_conclusao).toLocaleDateString("pt-BR") : "—"}
+                          </p>
+                        </div>
+                        <div className="px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-br-lg">
+                          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 font-semibold">
+                            <DollarSign className="h-3 w-3 shrink-0" /> Total
+                          </p>
+                          <p className="text-base font-extrabold font-mono mt-0.5 text-emerald-700 dark:text-emerald-300 leading-tight">
+                            {(os.valor_total || 0) > 0
+                              ? `R$ ${Number(os.valor_total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                              : "—"}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
@@ -736,49 +739,49 @@ export default function OrdensServico() {
                         onClick={() => setExpandedVeiculo(expandedVeiculo === os.id ? null : os.id)}
                         className="flex items-center gap-2 text-xs font-semibold text-primary hover:underline px-5 py-2.5 w-full text-left"
                       >
-                        <Wrench className="h-3.5 w-3.5" />
+                        <Wrench className="h-3.5 w-3.5 shrink-0" />
                         Dados do Veículo
-                        {expandedVeiculo === os.id ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        {expandedVeiculo === os.id ? <ChevronUp className="h-3.5 w-3.5 shrink-0 ml-auto" /> : <ChevronDown className="h-3.5 w-3.5 shrink-0 ml-auto" />}
                       </button>
 
                       {expandedVeiculo === os.id && (
-                        <div className="px-5 pb-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <div className="px-5 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                           <div className="flex items-center gap-2.5 rounded-lg bg-secondary/40 px-3 py-2.5">
                             <Gauge className="h-4 w-4 text-primary shrink-0" />
-                            <div>
-                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">KM Atual</p>
-                              <p className="text-sm font-bold font-mono">{os.km_atual ? Number(os.km_atual).toLocaleString("pt-BR") + " km" : "—"}</p>
+                            <div className="min-w-0">
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">KM Atual</p>
+                              <p className="text-sm font-bold font-mono truncate">{os.km_atual ? Number(os.km_atual).toLocaleString("pt-BR") + " km" : "—"}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2.5 rounded-lg bg-secondary/40 px-3 py-2.5">
                             <Gauge className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <div>
-                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">KM Última Revisão</p>
-                              <p className="text-sm font-bold font-mono">{os.km_ultima_revisao ? Number(os.km_ultima_revisao).toLocaleString("pt-BR") + " km" : "—"}</p>
+                            <div className="min-w-0">
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">KM Última Revisão</p>
+                              <p className="text-sm font-bold font-mono truncate">{os.km_ultima_revisao ? Number(os.km_ultima_revisao).toLocaleString("pt-BR") + " km" : "—"}</p>
                               {os.km_atual && os.km_ultima_revisao && (
-                                <p className="text-[10px] text-muted-foreground">({(Number(os.km_atual) - Number(os.km_ultima_revisao)).toLocaleString("pt-BR")} km atrás)</p>
+                                <p className="text-[10px] text-muted-foreground truncate">({(Number(os.km_atual) - Number(os.km_ultima_revisao)).toLocaleString("pt-BR")} km atrás)</p>
                               )}
                             </div>
                           </div>
                           <div className="flex items-center gap-2.5 rounded-lg bg-secondary/40 px-3 py-2.5">
                             <Fuel className="h-4 w-4 text-primary shrink-0" />
-                            <div>
-                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Combustível</p>
-                              <p className="text-sm font-bold">{os.combustivel || "—"}</p>
+                            <div className="min-w-0">
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">Combustível</p>
+                              <p className="text-sm font-bold truncate">{os.combustivel || "—"}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2.5 rounded-lg bg-secondary/40 px-3 py-2.5">
                             <Droplets className="h-4 w-4 text-primary shrink-0" />
-                            <div>
-                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Óleo Recomendado</p>
-                              <p className="text-sm font-bold">{os.oleo_recomendado || "—"}</p>
+                            <div className="min-w-0">
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">Óleo Recomendado</p>
+                              <p className="text-sm font-bold truncate">{os.oleo_recomendado || "—"}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2.5 rounded-lg bg-secondary/40 px-3 py-2.5 col-span-2">
+                          <div className="flex items-center gap-2.5 rounded-lg bg-secondary/40 px-3 py-2.5 sm:col-span-2 lg:col-span-1">
                             <Droplets className="h-4 w-4 text-amber-500 shrink-0" />
-                            <div>
-                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Última Troca de Óleo</p>
-                              <p className="text-sm font-bold">
+                            <div className="min-w-0">
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">Última Troca de Óleo</p>
+                              <p className="text-sm font-bold truncate">
                                 {os.ultima_troca_oleo ? new Date(os.ultima_troca_oleo).toLocaleDateString("pt-BR") : "—"}
                                 {os.ultima_troca_oleo && (
                                   <span className="text-xs font-normal text-muted-foreground ml-1">

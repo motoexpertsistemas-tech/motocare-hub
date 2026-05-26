@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Check, X, ChevronLeft, ChevronRight } from "lucide-react";
 import PermissoesAcessosTab, { type PermissoesData, getDefaultPermissoes } from "./PermissoesAcessosTab";
+import { useBranch } from "@/contexts/BranchContext";
 
 export interface FuncionarioData {
   id: string;
@@ -93,21 +94,33 @@ const defaultFuncionario: FuncionarioData = {
 const TABS = ["dados-gerais", "dados-secundarios", "permissoes", "campos-extras", "foto", "contatos", "endereco", "lojas", "anexos"];
 const TAB_LABELS = ["Dados gerais", "Dados secundários", "Permissões", "Campos extras", "Foto", "Contatos", "Endereço", "Lojas", "Anexos"];
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
-const LOJAS_DISPONIVEIS = ["ATACADO DKA MOTOS", "DKA GERENCIAL", "Matriz"];
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   funcionario?: Partial<FuncionarioData> | null;
-  onSave: (data: FuncionarioData) => void;
+  onSave: (data: FuncionarioData) => void | Promise<boolean | void>;
 }
 
 export default function EditFuncionarioDialog({ open, onOpenChange, funcionario, onSave }: Props) {
+  const { branches } = useBranch();
+  const lojasDisponiveis = branches.length > 0 ? branches.map(b => b.nome) : ["Matriz"];
+
   const [tab, setTab] = useState("dados-gerais");
   const [form, setForm] = useState<FuncionarioData>(() => ({
     ...defaultFuncionario,
     ...funcionario,
   }));
+
+  useEffect(() => {
+    if (open) {
+      setForm({
+        ...defaultFuncionario,
+        ...(funcionario || {}),
+      });
+      setTab("dados-gerais");
+    }
+  }, [open, funcionario]);
 
   const setF = (partial: Partial<FuncionarioData>) => setForm((p) => ({ ...p, ...partial }));
 
@@ -115,9 +128,13 @@ export default function EditFuncionarioDialog({ open, onOpenChange, funcionario,
   const goNext = () => { if (tabIndex < TABS.length - 1) setTab(TABS[tabIndex + 1]); };
   const goPrev = () => { if (tabIndex > 0) setTab(TABS[tabIndex - 1]); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.nome.trim()) { toast.error("Nome é obrigatório"); return; }
-    onSave(form);
+    const result = await onSave(form);
+    
+    // Se onSave retornar false explicitamente, aborta o fechamento da modal.
+    if (result === false) return;
+
     onOpenChange(false);
     toast.success("Funcionário salvo com sucesso!");
   };
@@ -389,7 +406,7 @@ export default function EditFuncionarioDialog({ open, onOpenChange, funcionario,
               <p className="text-sm text-yellow-800 dark:text-yellow-200">Selecione no mínimo uma loja de acesso.</p>
             </div>
             <div className="space-y-2">
-              {LOJAS_DISPONIVEIS.map((loja) => (
+              {lojasDisponiveis.map((loja) => (
                 <div key={loja} className="flex items-center gap-2">
                   <Checkbox checked={form.lojas.includes(loja)} onCheckedChange={() => toggleLoja(loja)} />
                   <Label className="font-normal">{loja}</Label>

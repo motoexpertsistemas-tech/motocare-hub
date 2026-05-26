@@ -87,37 +87,38 @@ export default function Login() {
   const SlideIcon = currentSlideData.icon;
 
   return (
-    <div className="min-h-screen flex" style={{ colorScheme: "dark" }}>
+    <div className="min-h-screen flex bg-[#0A0A0A]" style={{ colorScheme: "dark" }}>
       <InstallAppBanner />
 
       {/* Left Side - Marketing */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] bg-[#0A0A0A] relative overflow-hidden flex-col">
+      <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] bg-[#0A0A0A] relative overflow-hidden flex-col border-r border-white/5">
         {/* Background decorations */}
         <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-[hsl(3, 62%, 46%)]/10 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute bottom-0 right-0 w-80 h-80 bg-[hsl(3, 62%, 46%)]/5 rounded-full blur-[100px] translate-x-1/4 translate-y-1/4" />
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
+          <div className="absolute top-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2 animate-pulse-glow" />
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[100px] translate-x-1/4 translate-y-1/4" />
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAyIiBoZWlnaHQ9IjYwMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDYwIDAgTCAwIDAgMCA2MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDIpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-40" />
         </div>
 
         <div className="relative z-10 flex flex-col justify-between h-full p-10 xl:p-16">
           {/* Top - Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-[hsl(3, 62%, 46%)]/20">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-primary/20 ring-1 ring-primary/30">
               <img src={ottoIcon} alt="Otto Tech" className="w-full h-full object-contain" />
             </div>
-            <span className="text-white font-bold text-xl tracking-tight">Otto Tech Sistemas</span>
+            <span className="text-white font-bold text-xl tracking-tight bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">Otto Tech Sistemas</span>
           </div>
 
           {/* Center - Slide Content */}
           <div className="flex-1 flex flex-col justify-center items-center text-center max-w-lg mx-auto">
-            <div className="mb-8 transition-all duration-500 ease-in-out" key={currentSlide}>
-              <div className="w-16 h-16 rounded-2xl bg-[hsl(3, 62%, 46%)]/10 border border-[hsl(3, 62%, 46%)]/20 flex items-center justify-center mx-auto mb-6">
-                <SlideIcon className="h-8 w-8 text-[hsl(3, 62%, 46%)]" />
+            <div className="mb-8 transition-all duration-500 ease-in-out transform hover:scale-[1.01]" key={currentSlide}>
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/25 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/10 relative group overflow-hidden">
+                <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <SlideIcon className="h-8 w-8 text-primary relative z-10 animate-pulse-glow" />
               </div>
-              <h2 className="text-3xl xl:text-4xl font-extrabold text-white leading-tight mb-4">
+              <h2 className="text-3xl xl:text-4xl font-extrabold text-white leading-tight mb-4 tracking-tight">
                 {currentSlideData.title}
               </h2>
-              <p className="text-gray-400 text-lg leading-relaxed">
+              <p className="text-gray-400 text-lg leading-relaxed font-normal">
                 {currentSlideData.description}
               </p>
             </div>
@@ -126,7 +127,7 @@ export default function Login() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)}
-                className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-gray-500 hover:text-white hover:border-white/30 transition-colors"
+                className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-gray-500 hover:text-white hover:border-white/30 transition-all duration-200 active:scale-90"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -137,7 +138,7 @@ export default function Login() {
                     onClick={() => setCurrentSlide(i)}
                     className={`h-1.5 rounded-full transition-all duration-300 ${
                       i === currentSlide
-                        ? "w-8 bg-[hsl(3, 62%, 46%)]"
+                        ? "w-8 bg-primary shadow-md shadow-primary/45"
                         : "w-3 bg-white/20 hover:bg-white/30"
                     }`}
                   />
@@ -145,7 +146,7 @@ export default function Login() {
               </div>
               <button
                 onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
-                className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-gray-500 hover:text-white hover:border-white/30 transition-colors"
+                className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-gray-500 hover:text-white hover:border-white/30 transition-all duration-200 active:scale-90"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -154,16 +155,16 @@ export default function Login() {
 
           {/* Bottom - Features strip */}
           <div className="flex items-center gap-6 text-gray-500 text-sm">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4 text-[hsl(3, 62%, 46%)]" />
+            <div className="flex items-center gap-1.5 hover:text-gray-300 transition-colors duration-200">
+              <ShieldCheck className="h-4 w-4 text-primary" />
               <span>Dados seguros</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Zap className="h-4 w-4 text-[hsl(3, 62%, 46%)]" />
+            <div className="flex items-center gap-1.5 hover:text-gray-300 transition-colors duration-200">
+              <Zap className="h-4 w-4 text-primary animate-pulse" />
               <span>Acesso 24/7</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <TrendingUp className="h-4 w-4 text-[hsl(3, 62%, 46%)]" />
+            <div className="flex items-center gap-1.5 hover:text-gray-300 transition-colors duration-200">
+              <TrendingUp className="h-4 w-4 text-primary" />
               <span>+500 empresas</span>
             </div>
           </div>
@@ -171,33 +172,37 @@ export default function Login() {
       </div>
 
       {/* Right Side - Login */}
-      <div className="w-full lg:w-1/2 xl:w-[45%] bg-[#111111] flex items-center justify-center p-6 sm:p-10">
-        <div className="w-full max-w-md">
+      <div className="w-full lg:w-1/2 xl:w-[45%] bg-gradient-to-b from-[#121212] to-[#0A0A0A] flex items-center justify-center p-6 sm:p-10 relative">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+          <div className="absolute top-1/4 right-1/4 w-80 h-80 bg-primary/5 rounded-full blur-[100px]" />
+        </div>
+
+        <div className="w-full max-w-md relative z-10">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 rounded-xl overflow-hidden">
+            <div className="w-10 h-10 rounded-xl overflow-hidden ring-1 ring-primary/30">
               <img src={ottoIcon} alt="Otto Tech" className="w-full h-full object-contain" />
             </div>
-            <span className="text-white font-bold text-xl">Otto Tech Sistemas</span>
+            <span className="text-white font-bold text-xl tracking-tight">Otto Tech Sistemas</span>
           </div>
 
           {/* Logo & Title */}
           <div className="text-center mb-8">
-            <div className="h-20 w-20 rounded-2xl mx-auto mb-4 overflow-hidden shadow-lg border border-white/10">
+            <div className="h-20 w-20 rounded-2xl mx-auto mb-4 overflow-hidden shadow-xl border border-white/10 ring-2 ring-primary/20 hover:ring-primary/45 transition-all duration-300 transform hover:scale-105">
               <img src={ottoIcon} alt="Otto Tech Sistemas" className="w-full h-full object-contain" />
             </div>
-            <h1 className="text-2xl font-extrabold text-white">Otto Tech Sistemas</h1>
-            <p className="text-sm text-gray-500 mt-1">Acesse sua conta para gerenciar sua empresa</p>
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">Otto Tech Sistemas</h1>
+            <p className="text-sm text-gray-400 mt-1">Acesse sua conta para gerenciar sua empresa</p>
           </div>
 
           {/* Tabs */}
-          <div className="flex bg-white/5 rounded-xl p-1 mb-6">
-            <button className="flex-1 py-2.5 text-sm font-semibold rounded-lg bg-[hsl(3, 62%, 46%)] text-white shadow-md transition-all">
+          <div className="flex bg-white/5 border border-white/5 rounded-xl p-1 mb-6">
+            <button className="flex-1 py-2.5 text-sm font-semibold rounded-lg bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/95 transition-all duration-300 transform active:scale-[0.98]">
               Entrar
             </button>
             <button
               onClick={() => navigate("/cadastro")}
-              className="flex-1 py-2.5 text-sm font-semibold rounded-lg text-gray-400 hover:text-white transition-all"
+              className="flex-1 py-2.5 text-sm font-semibold rounded-lg text-gray-400 hover:text-white transition-all duration-300 hover:bg-white/5"
             >
               Criar conta
             </button>
@@ -206,23 +211,47 @@ export default function Login() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="text-xs font-medium text-gray-400 mb-1.5 block">Email</label>
-              <Input type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 h-12 rounded-xl" />
+              <Input 
+                type="email" 
+                placeholder="seu@email.com" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 h-12 rounded-xl focus:border-primary/50 focus:ring-primary/30 transition-all duration-200" 
+              />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-400 mb-1.5 block">Senha</label>
               <div className="relative">
-                <Input type={showPassword ? "text" : "password"} placeholder="••••••••" value={senha} onChange={(e) => setSenha(e.target.value)} className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 h-12 pr-10 rounded-xl" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
+                <Input 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="••••••••" 
+                  value={senha} 
+                  onChange={(e) => setSenha(e.target.value)} 
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 h-12 pr-10 rounded-xl focus:border-primary/50 focus:ring-primary/30 transition-all duration-200" 
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)} 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
             <div className="flex justify-end">
-              <button type="button" className="text-xs text-[hsl(0,84%,55%)] hover:underline" onClick={() => toast.info("Funcionalidade em breve!")}>
+              <button 
+                type="button" 
+                className="text-xs text-primary font-medium hover:text-primary/80 transition-colors hover:underline" 
+                onClick={() => toast.info("Funcionalidade em breve!")}
+              >
                 Esqueci minha senha
               </button>
             </div>
-            <Button type="submit" disabled={loading} className="w-full h-12 bg-[hsl(3, 62%, 46%)] hover:bg-[hsl(3, 55%, 52%)] text-white font-semibold shadow-lg shadow-[hsl(3, 62%, 46%)]/20 rounded-xl text-base">
+            <Button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-semibold shadow-lg shadow-primary/20 rounded-xl text-base transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.98]"
+            >
               {loading ? "Entrando..." : "Acessar minha conta"}
             </Button>
           </form>
@@ -235,7 +264,10 @@ export default function Login() {
           </div>
 
           {/* Google Sign In */}
-          <Button type="button" variant="outline" className="w-full h-12 bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 rounded-xl font-medium"
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="w-full h-12 bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 rounded-xl font-medium transition-all duration-300 hover:border-white/20 hover:scale-[1.01] active:scale-[0.98]"
             onClick={async () => {
               const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
               if (error) toast.error("Erro ao entrar com Google: " + error.message);
@@ -263,7 +295,7 @@ export default function Login() {
                 <a
                   key={social.label}
                   href="#"
-                  className="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center text-gray-500 hover:text-white hover:border-white/30 transition-colors"
+                  className="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/30 transition-all duration-300"
                   title={social.label}
                 >
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
@@ -276,7 +308,7 @@ export default function Login() {
 
           {/* Footer */}
           <div className="mt-8 text-center text-xs text-gray-600">
-            <p>Powered by <span className="font-semibold text-[hsl(3, 62%, 46%)]">Otto Tech Sistemas</span></p>
+            <p>Powered by <span className="font-semibold text-primary">Otto Tech Sistemas</span></p>
           </div>
         </div>
       </div>

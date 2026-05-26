@@ -8,8 +8,10 @@ import { toast } from "@/hooks/use-toast";
 import { Plus, Search, Pencil, Trash2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import EditFuncionarioDialog, { type FuncionarioData } from "@/components/EditFuncionarioDialog";
+import { useEmpresa } from "@/contexts/EmpresaContext";
 
 export default function Funcionarios() {
+  const { empresaId } = useEmpresa();
   const [busca, setBusca] = useState("");
   const [funcionarios, setFuncionarios] = useState<FuncionarioData[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -93,7 +95,7 @@ export default function Funcionarios() {
         .maybeSingle() as any;
       if (existing && existing.id !== data.id) {
         toast({ title: "CPF já cadastrado", description: "Já existe um funcionário com este CPF.", variant: "destructive" });
-        return;
+        return false;
       }
     }
 
@@ -130,16 +132,18 @@ export default function Funcionarios() {
       cargo: data.cargo,
       telefone: data.telefone,
       ativo: data.ativo,
+      empresa_id: empresaId,
     };
 
     if (data.id && funcionarios.some((f) => f.id === data.id)) {
       const { error } = await supabase.from("funcionarios" as any).update(payload).eq("id", data.id);
-      if (error) { toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" }); return; }
+      if (error) { toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" }); return false; }
     } else {
       const { error } = await supabase.from("funcionarios" as any).insert(payload);
-      if (error) { toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" }); return; }
+      if (error) { toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" }); return false; }
     }
     fetchFuncionarios();
+    return true;
   };
 
   const handleDelete = async (id: string) => {
@@ -185,10 +189,11 @@ export default function Funcionarios() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
+                  <TableHead>CPF</TableHead>
                   <TableHead>E-mail</TableHead>
                   <TableHead>Telefone</TableHead>
                   <TableHead>Permite acesso</TableHead>
-                  <TableHead>Situação</TableHead>
+                  <TableHead>Grupo</TableHead>
                   <TableHead className="w-28">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -196,6 +201,7 @@ export default function Funcionarios() {
                 {filtrados.map((f) => (
                   <TableRow key={f.id}>
                     <TableCell className="font-medium">{f.nome}</TableCell>
+                    <TableCell>{f.cpf || "-"}</TableCell>
                     <TableCell className="text-primary">{f.email}</TableCell>
                     <TableCell>{f.celular1 || f.telefone}</TableCell>
                     <TableCell>
@@ -206,8 +212,8 @@ export default function Funcionarios() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={f.ativo ? "default" : "secondary"}>
-                        {f.ativo ? "Ativo" : "Inativo"}
+                      <Badge variant="default">
+                        {f.grupo_acesso}
                       </Badge>
                     </TableCell>
                     <TableCell>
