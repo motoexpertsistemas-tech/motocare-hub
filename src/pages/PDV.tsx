@@ -526,7 +526,7 @@ export default function PDV() {
             <span className="text-xs font-normal text-muted-foreground">{totalItems} itens</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col overflow-hidden p-4 pt-0 gap-3">
+        <CardContent className="flex-1 flex flex-col overflow-y-auto p-4 pt-0 gap-3 scrollbar-thin">
           <div className="space-y-2">
             <div className="space-y-1">
               <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
@@ -557,7 +557,7 @@ export default function PDV() {
             </div>
           </div>
           <Separator />
-          <div className="flex-1 space-y-2 overflow-auto">
+          <div className="flex-1 space-y-2 min-h-[150px]">
             {cart.length === 0 && (
               <div className="flex h-full items-center justify-center">
                 <p className="text-sm text-muted-foreground">Adicione produtos ao carrinho</p>
