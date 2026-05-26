@@ -11,6 +11,13 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import ottoLogoDark from "@/assets/otto-tech-dark.png";
 import {
   LayoutDashboard,
@@ -612,20 +619,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </button>
             ))}
             <span className="mx-1 h-5 w-px bg-border shrink-0" />
-            {planos.map((pl) => (
-              <button
-                key={pl}
-                onClick={() => setActivePlano(pl)}
-                className={cn(
-                  "rounded-md px-2.5 py-1.5 text-[11px] font-bold tracking-wide transition-all duration-200 whitespace-nowrap shrink-0",
-                  activePlano === pl
-                    ? "bg-accent text-accent-foreground shadow-md"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                )}
-              >
-                {planoLabels[pl]}
-              </button>
-            ))}
+            <Select value={activePlano} onValueChange={(val: any) => setActivePlano(val)}>
+              <SelectTrigger className="h-8 w-[110px] text-[11px] font-bold">
+                <SelectValue placeholder="Plano" />
+              </SelectTrigger>
+              <SelectContent>
+                {planos.map((pl) => (
+                  <SelectItem key={pl} value={pl} className="text-[11px] font-bold">
+                    {planoLabels[pl]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Right side */}
