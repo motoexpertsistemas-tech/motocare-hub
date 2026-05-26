@@ -1,0 +1,1 @@
+ALTER TABLE public.transportadoras ADD COLUMN IF NOT EXISTS tipo TEXT DEFAULT 'pessoa_juridica';

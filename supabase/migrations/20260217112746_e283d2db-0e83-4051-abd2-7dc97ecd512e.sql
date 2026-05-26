@@ -1,0 +1,1 @@
+ALTER TABLE public.produtos_catalogo ADD COLUMN codigo_fornecedor text DEFAULT NULL;

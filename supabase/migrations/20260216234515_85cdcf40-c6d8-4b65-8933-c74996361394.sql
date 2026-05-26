@@ -1,0 +1,1 @@
+DELETE FROM produtos_catalogo WHERE id = '47347563-5a4d-434c-8287-b4eb2ff534ee';

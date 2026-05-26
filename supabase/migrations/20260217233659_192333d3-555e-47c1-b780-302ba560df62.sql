@@ -1,0 +1,1 @@
+UPDATE produtos_catalogo SET marca = 'MAGNETRON' WHERE nome ~ 'MAGN [0-9]';

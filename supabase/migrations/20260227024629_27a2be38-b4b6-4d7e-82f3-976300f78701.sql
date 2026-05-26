@@ -1,0 +1,2 @@
+INSERT INTO public.produtos_brindes (nome, descricao, tipo_brinde, quantidade, planos_aplicaveis) VALUES
+  ('Preços de Custo Atualizados', 'Todos os 28.000+ produtos já vêm com preço de custo atualizado dos principais distribuidores', 'preco_custo', 1, ARRAY['starter','professional','enterprise']);

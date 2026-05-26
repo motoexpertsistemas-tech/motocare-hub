@@ -1,0 +1,1 @@
+DELETE FROM marketplace_pedidos WHERE numero_pedido IN ('MLB-20260415-401', 'MLB-20260415-402', 'MLB-20260415-403');

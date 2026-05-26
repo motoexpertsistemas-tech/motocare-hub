@@ -1,0 +1,1 @@
+ALTER TABLE public.os_itens ADD COLUMN codigo text;

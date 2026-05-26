@@ -1,0 +1,1 @@
+UPDATE marketplace_pedidos SET status = 'para_enviar', sub_status = 'para_programar', codigo_rastreio = NULL WHERE id = 'aced9e8b-ef69-405c-8bcd-e66ed05711b0';

@@ -1,0 +1,1 @@
+UPDATE produtos_catalogo SET unidade = 'UN' WHERE nome ILIKE '%-UND%' AND (unidade IS NULL OR unidade = '' OR unidade != 'UN');

@@ -1,0 +1,1 @@
+UPDATE produtos_catalogo SET categoria = 'SEM CATEGORIA' WHERE categoria IS NULL;

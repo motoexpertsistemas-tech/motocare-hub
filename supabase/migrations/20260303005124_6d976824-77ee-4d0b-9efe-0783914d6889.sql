@@ -1,0 +1,1 @@
+ALTER TABLE public.os_itens ADD COLUMN status text NOT NULL DEFAULT 'pendente';

@@ -1,0 +1,1 @@
+ALTER TABLE public.produtos_catalogo ADD COLUMN IF NOT EXISTS ativo_vitrine boolean NOT NULL DEFAULT true;

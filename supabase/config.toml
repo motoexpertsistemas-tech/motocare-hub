@@ -1,0 +1,73 @@
+project_id = "qrwminvkdcjaqpiptxlr"
+
+[functions.scrape-cpl-catalog]
+verify_jwt = false
+
+[functions.import-sportive-catalog]
+verify_jwt = false
+
+[functions.fetch-product-color]
+verify_jwt = false
+
+[functions.import-vipal-catalog]
+verify_jwt = false
+
+[functions.fetch-sportive-images]
+verify_jwt = false
+
+[functions.import-perere-catalog]
+verify_jwt = false
+
+[functions.import-wester-catalog]
+verify_jwt = false
+
+[functions.search-product-details]
+verify_jwt = false
+
+[functions.batch-fetch-images]
+verify_jwt = false
+
+[functions.fetch-single-product-image]
+verify_jwt = false
+
+[functions.processar-mensagem]
+verify_jwt = false
+
+[functions.sync-mercado-livre]
+verify_jwt = false
+
+[functions.cron-sync-marketplaces]
+verify_jwt = false
+
+[functions.consultar-placa]
+verify_jwt = false
+
+[functions.asaas-payment]
+verify_jwt = false
+
+[functions.ai-search-product]
+verify_jwt = false
+
+[functions.ajudante-online]
+verify_jwt = false
+
+[functions.webhook-whatsapp]
+verify_jwt = false
+
+[functions.batch-update-prices]
+verify_jwt = false
+
+[functions.gerar-criativos]
+verify_jwt = false
+
+[functions.spedy-proxy]
+verify_jwt = false
+
+[functions.spedy-webhook]
+verify_jwt = false
+
+[functions.agendar-publico]
+verify_jwt = false
+
+[functions.executar-cadencias]
+verify_jwt = false

@@ -1,0 +1,1 @@
+ALTER TABLE public.ordem_servico ADD COLUMN criado_por text;
