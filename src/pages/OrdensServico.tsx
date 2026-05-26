@@ -643,25 +643,26 @@ export default function OrdensServico() {
                   <CardContent className="p-0">
                     {/* Top: ID + Status */}
                     <div className="flex items-center justify-between px-5 pt-5 pb-3">
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono text-sm font-bold text-primary">{os.numero_os}</span>
-                        <Badge variant="outline" className={`${statusStyles[os.status] || "bg-muted text-muted-foreground border-border"} text-[11px] uppercase font-bold tracking-wider`}>
+                      <div className="flex items-center gap-2 min-w-0 mr-2">
+                        <span className="font-mono text-sm font-bold text-primary whitespace-nowrap shrink-0">{os.numero_os}</span>
+                        <Badge variant="outline" className={`${statusStyles[os.status] || "bg-muted text-muted-foreground border-border"} text-[10px] uppercase font-bold tracking-wider whitespace-nowrap truncate`}>
                           {statusLabel[os.status] || os.status}
                         </Badge>
                       </div>
-                      <Button variant="outline" size="sm" className="h-8 w-8 rounded-full" onClick={() => navigate(`/os/${os.id}`)} title="Visualizar OS">
+                      <Button variant="outline" size="sm" className="h-8 w-8 rounded-full shrink-0" onClick={() => navigate(`/os/${os.id}`)} title="Visualizar OS">
                         <Eye className="h-3.5 w-3.5" />
                       </Button>
                     </div>
 
-                    {/* Client + Vehicle */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 border-t border-border/50 divide-y sm:divide-y-0 sm:divide-x divide-border/50">
-                      <div className="px-5 py-3 flex items-start gap-3">
+                    {/* Client + Vehicle stacked vertically to avoid horizontal squeezing */}
+                    <div className="border-t border-border/50 divide-y divide-border/50">
+                      {/* Client */}
+                      <div className="px-5 py-3.5 flex items-start gap-3.5">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 mt-0.5">
                           <User className="h-4 w-4 text-primary" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cliente</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Cliente</p>
                           <p className="text-sm font-bold mt-0.5 break-words">{os.cliente_nome || "—"}</p>
                           <p className="text-xs text-muted-foreground break-words">{os.cliente_telefone || ""}</p>
                           {os.cliente_telefone && (
@@ -678,12 +679,13 @@ export default function OrdensServico() {
                           )}
                         </div>
                       </div>
-                      <div className="px-5 py-3 flex items-start gap-3">
+                      {/* Vehicle */}
+                      <div className="px-5 py-3.5 flex items-start gap-3.5">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 mt-0.5">
                           <Car className="h-4 w-4 text-blue-500" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Veículo</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Veículo</p>
                           <p className="text-sm font-bold mt-0.5 break-words">
                             {[os.veiculo_marca, os.veiculo_modelo].filter(Boolean).join(" ") || "—"}
                             {os.veiculo_cor ? ` · ${os.veiculo_cor}` : ""}
