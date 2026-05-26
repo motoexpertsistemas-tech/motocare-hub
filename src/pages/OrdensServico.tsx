@@ -604,8 +604,8 @@ export default function OrdensServico() {
 
       {/* Real OS from database */}
       {realOS.length > 0 && (
-        <div className="grid gap-4">
-          <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Ordens de Serviço</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <h2 className="col-span-full text-sm font-bold text-muted-foreground uppercase tracking-wider">Ordens de Serviço</h2>
           {realOS
             .filter((os) => {
               // Status filter
@@ -655,17 +655,17 @@ export default function OrdensServico() {
                     </div>
 
                     {/* Client + Vehicle */}
-                    <div className="grid grid-cols-2 border-t border-border/50">
-                      <div className="px-5 py-3 border-r border-border/50 flex items-start gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 border-t border-border/50 divide-y sm:divide-y-0 sm:divide-x divide-border/50">
+                      <div className="px-5 py-3 flex items-start gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 mt-0.5">
                           <User className="h-4 w-4 text-primary" />
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cliente</p>
-                          <p className="text-sm font-bold mt-0.5">{os.cliente_nome || "—"}</p>
-                          <p className="text-xs text-muted-foreground">{os.cliente_telefone || ""}</p>
+                          <p className="text-sm font-bold mt-0.5 truncate">{os.cliente_nome || "—"}</p>
+                          <p className="text-xs text-muted-foreground truncate">{os.cliente_telefone || ""}</p>
                           {os.cliente_telefone && (
-                            <div className="flex items-center gap-1.5 mt-1.5">
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                               <Button variant="outline" size="sm" className="h-7 gap-1 text-[11px] px-2" onClick={() => window.open(`tel:${os.cliente_telefone}`)}>
                                 <Phone className="h-3 w-3" />
                                 Ligar
@@ -682,13 +682,13 @@ export default function OrdensServico() {
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 mt-0.5">
                           <Car className="h-4 w-4 text-blue-500" />
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Veículo</p>
-                          <p className="text-sm font-bold mt-0.5">
+                          <p className="text-sm font-bold mt-0.5 truncate">
                             {[os.veiculo_marca, os.veiculo_modelo].filter(Boolean).join(" ") || "—"}
                             {os.veiculo_cor ? ` · ${os.veiculo_cor}` : ""}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground truncate">
                             {os.placa || ""}
                             {os.veiculo_ano ? ` · ${os.veiculo_ano}` : ""}
                           </p>
@@ -697,18 +697,18 @@ export default function OrdensServico() {
                     </div>
 
                     {/* Info row: Mecânico, Previsão, Check-in, Valor */}
-                    <div className="grid grid-cols-4 border-t border-border/50">
-                      <div className="px-5 py-3 border-r border-border/50">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 border-t border-border/50">
+                      <div className="px-5 py-3 border-r border-b sm:border-b-0 border-border/50">
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                           <Wrench className="h-3 w-3" /> Mecânico
                         </p>
-                        <p className="text-sm font-bold mt-1">{mecanico || "—"}</p>
+                        <p className="text-sm font-bold mt-1 truncate">{mecanico || "—"}</p>
                       </div>
-                      <div className="px-5 py-3 border-r border-border/50">
+                      <div className="px-5 py-3 sm:border-r border-b sm:border-b-0 border-border/50">
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                           <Clock className="h-3 w-3" /> Previsão
                         </p>
-                        <p className="text-sm font-bold mt-1">
+                        <p className="text-sm font-bold mt-1 truncate">
                           {os.data_prevista_conclusao ? new Date(os.data_prevista_conclusao).toLocaleDateString("pt-BR") : "—"}
                         </p>
                       </div>
@@ -718,11 +718,11 @@ export default function OrdensServico() {
                         </p>
                         <p className="text-sm font-bold mt-1">{os.observacoes_checkin ? "✓" : "—"}</p>
                       </div>
-                      <div className="px-5 py-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-br-lg">
+                      <div className="px-5 py-3 bg-emerald-50 dark:bg-emerald-950/30 sm:rounded-br-lg">
                         <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 font-semibold">
                           <DollarSign className="h-3 w-3" /> Valor
                         </p>
-                        <p className="text-sm font-bold font-mono mt-1 text-emerald-700 dark:text-emerald-300">
+                        <p className="text-sm font-bold font-mono mt-1 text-emerald-700 dark:text-emerald-300 truncate">
                           {(os.valor_total || 0) > 0 ? `R$ ${Number(os.valor_total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
                         </p>
                       </div>
@@ -819,17 +819,32 @@ export default function OrdensServico() {
 
                     {/* Footer */}
                     <div className="flex items-center justify-between px-5 py-3 border-t border-border/50 bg-secondary/20">
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground truncate mr-2" title={`Criado em ${new Date(os.created_at).toLocaleDateString("pt-BR")}${os.criado_por ? ` por ${os.criado_por}` : ""}`}>
                         Criado em {new Date(os.created_at).toLocaleDateString("pt-BR")}
-                        {os.criado_por && <> · por <span className="font-bold text-foreground">{os.criado_por}</span></>}
                       </p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-9 w-9 text-green-600 border-green-500/30 hover:bg-green-500/10 rounded-lg" 
+                          onClick={() => window.open(`https://wa.me/55${(os.cliente_telefone || "").replace(/\D/g, "")}`)}
+                          title="WhatsApp"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-9 w-9 text-primary border-primary/30 hover:bg-primary/10 rounded-lg" 
+                          onClick={() => navigate(`/os/${os.id}?editar=true`)}
+                          title="Editar OS"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs">
-                              <MoreVertical className="h-3.5 w-3.5" />
-                              Ações
-                              <ChevronDown className="h-3 w-3" />
+                            <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg" title="Mais Ações">
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-52">
@@ -911,16 +926,6 @@ export default function OrdensServico() {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                        <Button className="bg-green-500 hover:bg-green-600 text-white gap-2 h-9 text-xs" onClick={() => window.open(`https://wa.me/55${(os.cliente_telefone || "").replace(/\D/g, "")}`)}>
-                          <MessageCircle className="h-3.5 w-3.5" />
-                          WhatsApp
-                          <ChevronRight className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button className="gradient-primary text-primary-foreground gap-2 h-9 text-xs" onClick={() => navigate(`/os/${os.id}?editar=true`)}>
-                          <Eye className="h-3.5 w-3.5" />
-                          Editar OS
-                          <ChevronRight className="h-3.5 w-3.5" />
-                        </Button>
                       </div>
                     </div>
                   </CardContent>
