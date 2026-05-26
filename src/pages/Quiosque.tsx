@@ -237,6 +237,22 @@ function KioskDashboard({ mechanicName, onLogout }: { mechanicName: string; onLo
     }
   };
 
+  const saveObservations = async (id: string, value: string) => {
+    try {
+      const { error } = await supabase
+        .from("ordem_servico")
+        .update({ observacoes: value } as any)
+        .eq("id", id);
+      if (error) throw error;
+      setOsList((prev) =>
+        prev.map((os) => (os.id === id ? { ...os, observacoes: value } : os))
+      );
+      toast({ title: "✅ Observações salvas com sucesso!" });
+    } catch (e: any) {
+      toast({ title: "Erro ao salvar observações", description: e.message, variant: "destructive" });
+    }
+  };
+
   const calcDaysAgo = (dateStr: string | null) => {
     if (!dateStr) return null;
     const d = new Date(dateStr);
@@ -514,8 +530,9 @@ function KioskDashboard({ mechanicName, onLogout }: { mechanicName: string; onLo
                     <div className="space-y-2">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Observações</p>
                       <textarea
-                        value={obs[os.id] || os.observacoes || ""}
+                        value={obs[os.id] !== undefined ? obs[os.id] : (os.observacoes || "")}
                         onChange={(e) => setObs((prev) => ({ ...prev, [os.id]: e.target.value }))}
+                        onBlur={(e) => saveObservations(os.id, e.target.value)}
                         placeholder="Adicionar observações..."
                         className="w-full min-h-[80px] rounded-lg border border-border bg-secondary/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
                       />
