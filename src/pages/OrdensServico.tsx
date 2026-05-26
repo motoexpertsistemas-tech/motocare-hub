@@ -662,8 +662,8 @@ export default function OrdensServico() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cliente</p>
-                          <p className="text-sm font-bold mt-0.5 truncate">{os.cliente_nome || "—"}</p>
-                          <p className="text-xs text-muted-foreground truncate">{os.cliente_telefone || ""}</p>
+                          <p className="text-sm font-bold mt-0.5 break-words">{os.cliente_nome || "—"}</p>
+                          <p className="text-xs text-muted-foreground break-words">{os.cliente_telefone || ""}</p>
                           {os.cliente_telefone && (
                             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                               <Button variant="outline" size="sm" className="h-7 gap-1 text-[11px] px-2" onClick={() => window.open(`tel:${os.cliente_telefone}`)}>
@@ -684,11 +684,11 @@ export default function OrdensServico() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Veículo</p>
-                          <p className="text-sm font-bold mt-0.5 truncate">
+                          <p className="text-sm font-bold mt-0.5 break-words">
                             {[os.veiculo_marca, os.veiculo_modelo].filter(Boolean).join(" ") || "—"}
                             {os.veiculo_cor ? ` · ${os.veiculo_cor}` : ""}
                           </p>
-                          <p className="text-xs text-muted-foreground truncate">
+                          <p className="text-xs text-muted-foreground break-words">
                             {os.placa || ""}
                             {os.veiculo_ano ? ` · ${os.veiculo_ano}` : ""}
                           </p>
