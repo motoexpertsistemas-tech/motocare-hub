@@ -210,74 +210,134 @@ export async function printA4(venda: VendaData) {
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
 <style>
-  @page { margin: 20mm; size: A4; }
-  body { font-family: Arial, sans-serif; font-size: 12px; color: #000; max-width: 700px; margin: 0 auto; }
-  .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-  .header-left { font-size: 11px; }
-  .header-right { text-align: right; font-size: 11px; }
-  h1 { font-size: 18px; margin: 10px 0; }
-  h2 { font-size: 14px; margin: 16px 0 8px; background: #f5f5f5; padding: 4px 8px; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-  th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd; font-size: 11px; }
-  th { background: #f0f0f0; font-weight: bold; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+  @page { margin: 15mm; size: A4; }
+  body { font-family: 'Inter', Arial, sans-serif; font-size: 12px; color: #333; max-width: 100%; margin: 0 auto; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .invoice-box { border: 1px solid #e2e8f0; border-radius: 8px; padding: 30px; background: #fff; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 24px; }
+  .header-left { font-size: 11px; color: #64748b; }
+  .header-right { text-align: right; font-size: 11px; color: #64748b; }
+  .big-name { font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; margin-bottom: 4px; display: block; text-transform: uppercase; }
+  .order-number { font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 4px; letter-spacing: -0.5px; }
+  .order-date { font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 8px; display: block; }
+  h2 { font-size: 12px; font-weight: 700; color: #0f172a; margin: 24px 0 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f1f5f9; padding-bottom: 6px; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+  th, td { padding: 10px 14px; text-align: left; font-size: 11px; border-bottom: 1px solid #e2e8f0; }
+  th { background: #f8fafc; font-weight: 700; color: #475569; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background-color: #fcfcfc; }
   .right { text-align: right; }
-  .total-row { font-weight: bold; font-size: 13px; }
-  .info-grid { display: grid; grid-template-columns: 100px 1fr; gap: 4px; font-size: 11px; margin-bottom: 12px; }
-  .info-label { font-weight: bold; }
-  .signature { margin-top: 60px; text-align: center; }
-  .signature-line { border-top: 1px solid #000; width: 300px; margin: 0 auto; padding-top: 4px; }
-  .big-name { font-size: 22px; font-weight: bold; }
+  .total-row td { font-weight: 800; font-size: 14px; color: #0f172a; background: #f1f5f9; border-top: 2px solid #e2e8f0; border-bottom: none; }
+  .total-row .total-label { text-align: right; text-transform: uppercase; font-size: 11px; color: #475569; font-weight: 700; }
+  .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; background: #f8fafc; padding: 16px 20px; border-radius: 8px; border: 1px solid #f1f5f9; }
+  .info-item { display: flex; flex-direction: column; }
+  .info-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px; }
+  .info-value { font-size: 12px; font-weight: 600; color: #0f172a; }
+  .signature-section { margin-top: 70px; display: flex; justify-content: center; }
+  .signature-box { text-align: center; width: 350px; }
+  .signature-line { border-top: 1px solid #94a3b8; padding-top: 10px; font-size: 12px; color: #475569; font-weight: 600; }
+  .footer { text-align: center; font-size: 10px; color: #94a3b8; margin-top: 50px; }
 </style></head><body>
-  <div class="header">
-    <div class="header-left">
-      <span class="big-name">${loja.nome_fantasia}</span><br>
-      ${loja.razao_social}<br>
-      CNPJ: ${loja.cnpj}<br>
-      ${endereco}<br>
-      ${cidadeEstado}
+  <div class="invoice-box">
+    <div class="header">
+      <div class="header-left">
+        <span class="big-name">${loja.nome_fantasia}</span>
+        ${loja.razao_social}<br>
+        CNPJ: ${loja.cnpj}<br>
+        ${endereco}<br>
+        ${cidadeEstado}
+      </div>
+      <div class="header-right">
+        <div class="order-number">PEDIDO Nº ${venda.numero}</div>
+        <span class="order-date">Emitido em: ${venda.data}</span>
+        <div style="margin-top: 12px; line-height: 1.6;">
+          ${loja.telefone}${loja.telefone2 ? " - " + loja.telefone2 : ""}<br>
+          ${loja.email ? loja.email + "<br>" : ""}
+          ${loja.website ? loja.website + "<br>" : ""}
+          <strong style="color:#0f172a;">Vendedor:</strong> ${venda.vendedor}
+        </div>
+      </div>
     </div>
-    <div class="header-right">
-      ${loja.telefone}${loja.telefone2 ? " - " + loja.telefone2 : ""}<br>
-      ${loja.email || ""}<br>
-      ${loja.website || ""}<br>
-      Vendedor: ${venda.vendedor}
+
+    <h2>DADOS DO CLIENTE</h2>
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Cliente</span>
+        <span class="info-value">${venda.cliente}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">CNPJ/CPF</span>
+        <span class="info-value">${venda.cliente_cpf || "-"}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Telefone</span>
+        <span class="info-value">${venda.cliente_telefone || "-"}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">E-mail</span>
+        <span class="info-value">${venda.cliente_email || "-"}</span>
+      </div>
+      <div class="info-item" style="grid-column: span 2;">
+        <span class="info-label">Endereço</span>
+        <span class="info-value">
+          ${venda.cliente_endereco ? `${venda.cliente_endereco} - ${venda.cliente_cidade || ""} / ${venda.cliente_estado || ""} - CEP: ${venda.cliente_cep || ""}` : "-"}
+        </span>
+      </div>
+    </div>
+
+    <h2>PRODUTOS</h2>
+    <table>
+      <thead>
+        <tr>
+          <th width="8%">ITEM</th>
+          <th width="15%">CÓDIGO</th>
+          <th width="37%">NOME</th>
+          <th class="right" width="10%">QTD.</th>
+          <th class="right" width="15%">VR. UNIT.</th>
+          <th class="right" width="15%">SUBTOTAL</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itensRows}
+      </tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td colspan="5" class="total-label">TOTAL DO PEDIDO:</td>
+          <td class="right">R$ ${formatBRL(venda.total)}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <h2>DADOS DO PAGAMENTO</h2>
+    <table>
+      <thead>
+        <tr>
+          <th width="20%">DATA</th>
+          <th class="right" width="20%">VALOR</th>
+          <th width="40%">FORMA DE PAGAMENTO</th>
+          <th width="20%">OBSERVAÇÃO</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>${venda.data}</td>
+          <td class="right">R$ ${formatBRL(venda.total)}</td>
+          <td><strong>${venda.forma_pagamento}</strong></td>
+          <td>-</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="signature-section">
+      <div class="signature-box">
+        <div class="signature-line">Assinatura do cliente</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Documento auxiliar impresso pelo sistema MotoCare Hub</p>
     </div>
   </div>
-
-  <h1>PEDIDO Nº ${venda.numero}</h1>
-  <p>Data: ${venda.data} &nbsp;&nbsp; PRAZO DE ENTREGA: ${venda.data}</p>
-
-  <h2>DADOS DO CLIENTE</h2>
-  <div class="info-grid">
-    <span class="info-label">Cliente:</span><span>${venda.cliente}</span>
-    <span class="info-label">CNPJ/CPF:</span><span>${venda.cliente_cpf || ""}</span>
-    <span class="info-label">Endereço:</span><span>${venda.cliente_endereco || ""}</span>
-    <span class="info-label">CEP:</span><span>${venda.cliente_cep || ""}</span>
-    <span class="info-label">Cidade:</span><span>${venda.cliente_cidade || ""}</span>
-    <span class="info-label">Estado:</span><span>${venda.cliente_estado || ""}</span>
-    <span class="info-label">Telefone:</span><span>${venda.cliente_telefone || ""}</span>
-    <span class="info-label">E-mail:</span><span>${venda.cliente_email || ""}</span>
-  </div>
-
-  <h2>PRODUTOS</h2>
-  <table>
-    <tr><th>ITEM</th><th>CÓDIGO</th><th>NOME</th><th class="right">QTD.</th><th class="right">VR. UNIT.</th><th class="right">SUBTOTAL</th></tr>
-    ${itensRows}
-  </table>
-  <table>
-    <tr class="total-row"><td colspan="5" class="right">TOTAL:</td><td class="right">R$ ${formatBRL(venda.total)}</td></tr>
-  </table>
-
-  <h2>DADOS DO PAGAMENTO</h2>
-  <table>
-    <tr><th>VENCIMENTO</th><th class="right">VALOR</th><th>FORMA DE PAGAMENTO</th><th>OBSERVAÇÃO</th></tr>
-    <tr><td>${venda.data}</td><td class="right">${formatBRL(venda.total)}</td><td>${venda.forma_pagamento}</td><td></td></tr>
-  </table>
-
-  <div class="signature">
-    <div class="signature-line">Assinatura do cliente</div>
-  </div>
-  <p style="text-align:center; font-size:9px; color:#999; margin-top:30px">Pedido emitido no sistema</p>
 </body></html>`;
 
   openPrintWindow(html);
