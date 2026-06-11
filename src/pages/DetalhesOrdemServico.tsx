@@ -199,6 +199,10 @@ export default function DetalhesOrdemServico() {
   const [editObs, setEditObs] = useState("");
   const [editObsInternas, setEditObsInternas] = useState("");
 
+  const [editFotosCheckin, setEditFotosCheckin] = useState<(File | string | null)[]>(Array(8).fill(null));
+  const editFotosInputRef = useRef<HTMLInputElement>(null);
+  const activeEditFotosSlotIndex = useRef<number | null>(null);
+
   // Edit mode: inline products/services
   const [editProdutos, setEditProdutos] = useState<EditProdutoItem[]>([]);
   const [editServicos, setEditServicos] = useState<EditServicoItem[]>([]);
@@ -349,6 +353,18 @@ export default function DetalhesOrdemServico() {
       const osTyped = osData as unknown as OSData;
       setOs(osTyped);
 
+      // Carregar fotos nos slots com base no rótulo
+      const fotosCarregadas = (osData as any).fotos_checkin || [];
+      const novasFotos = Array(8).fill(null);
+      const labelsValidos = ["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"];
+      fotosCarregadas.forEach((f: any) => {
+        const idx = labelsValidos.indexOf(f.label);
+        if (idx !== -1) {
+          novasFotos[idx] = f.url;
+        }
+      });
+      setEditFotosCheckin(novasFotos);
+
       const { data: itensData, error: itensError } = await supabase.from("os_itens").select("*").eq("os_id", id).order("created_at");
       if (itensError) throw itensError;
       setItens((itensData || []) as unknown as OSItem[]);
@@ -414,6 +430,19 @@ export default function DetalhesOrdemServico() {
       if (cl) setEditChecklist(JSON.parse(cl));
       else setEditChecklist(JSON.parse(JSON.stringify(CHECKLIST_INICIAL)));
     } catch { setEditChecklist(JSON.parse(JSON.stringify(CHECKLIST_INICIAL))); }
+
+    // Carregar fotos de check-in existentes
+    const fotosCarregadas = (os as any).fotos_checkin || [];
+    const novasFotos = Array(8).fill(null);
+    const labelsValidos = ["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"];
+    fotosCarregadas.forEach((f: any) => {
+      const idx = labelsValidos.indexOf(f.label);
+      if (idx !== -1) {
+        novasFotos[idx] = f.url;
+      }
+    });
+    setEditFotosCheckin(novasFotos);
+
     setEditObsCheckin((os as any).observacoes_checkin || "");
     setEditCliente(os.cliente_nome ? { nome_completo: os.cliente_nome, telefone: os.cliente_telefone } : null);
 
@@ -600,6 +629,39 @@ export default function DetalhesOrdemServico() {
         observacoes_checkin: editObsCheckin || null,
         condicoes_pagamento: editPagamento.gerar_condicoes ? editPagamento.parcelas : null,
       } as any).eq("id", os.id);
+
+      // Upload das fotos novas no salvarEdicao
+      const FOTOS_LABELS = ["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"];
+      const urlsFotos: { label: string; url: string }[] = [];
+
+      for (let i = 0; i < editFotosCheckin.length; i++) {
+        const foto = editFotosCheckin[i];
+        if (!foto) continue;
+        const label = FOTOS_LABELS[i];
+
+        if (typeof foto === "string") {
+          urlsFotos.push({ label, url: foto });
+        } else if (foto instanceof File) {
+          const ext = foto.name.split(".").pop();
+          const fileName = `${os.empresa_id}/${os.id}/${Math.random().toString(36).substring(2)}_${Date.now()}.${ext}`;
+          const { error: uploadError } = await supabase.storage.from("os-checkin").upload(fileName, foto);
+          if (uploadError) {
+            console.error(`Erro ao fazer upload da foto ${label}:`, uploadError);
+            continue;
+          }
+          const { data: { publicUrl } } = supabase.storage.from("os-checkin").getPublicUrl(fileName);
+          urlsFotos.push({ label, url: publicUrl });
+        }
+      }
+
+      const { error: updateFotosError } = await supabase
+        .from("ordem_servico")
+        .update({ fotos_checkin: urlsFotos } as any)
+        .eq("id", os.id);
+        
+      if (updateFotosError) {
+        console.error("Erro ao salvar URLs das fotos na OS:", updateFotosError);
+      }
 
       if (error) throw error;
 
@@ -1373,15 +1435,99 @@ export default function DetalhesOrdemServico() {
           <CollapsibleContent>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* LEFT: Observações */}
+              {/* LEFT: Fotos e Observações */}
               <div className="space-y-3">
+                {/* Fotos do Check-in */}
+                <div className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold tracking-wide mb-1">
+                    <span>FOTOS DO CHECK-IN</span>
+                    <Badge variant="secondary">{editFotosCheckin.filter(Boolean).length}/8</Badge>
+                  </div>
+                  
+                  <input
+                    ref={editFotosInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (!e.target.files || e.target.files.length === 0) return;
+                      const file = e.target.files[0];
+                      const index = activeEditFotosSlotIndex.current;
+                      if (index !== null) {
+                        setEditFotosCheckin((prev) => {
+                          const copy = [...prev];
+                          copy[index] = file;
+                          return copy;
+                        });
+                      }
+                      if (editFotosInputRef.current) editFotosInputRef.current.value = "";
+                    }}
+                  />
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"].map((label, idx) => {
+                      const foto = editFotosCheckin[idx];
+                      const isUrl = typeof foto === "string";
+                      const imgSrc = foto ? (isUrl ? (foto as string) : URL.createObjectURL(foto as File)) : null;
+
+                      return (
+                        <div key={idx} className="relative aspect-square rounded-lg border border-border bg-secondary/20 flex flex-col items-center justify-center overflow-hidden group">
+                          {imgSrc ? (
+                            <>
+                              <img src={imgSrc} alt={label} className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => window.open(imgSrc, "_blank")}
+                                  className="p-1 rounded-full bg-white/20 text-white hover:bg-white/40"
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditFotosCheckin((prev) => {
+                                      const copy = [...prev];
+                                      copy[idx] = null;
+                                      return copy;
+                                    });
+                                  }}
+                                  className="p-1 rounded-full bg-destructive/85 text-destructive-foreground hover:bg-destructive"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                              <div className="absolute bottom-0 left-0 right-0 bg-background/80 py-0.5 text-center text-[9px] font-bold text-foreground truncate px-1">
+                                {label}
+                              </div>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                activeEditFotosSlotIndex.current = idx;
+                                editFotosInputRef.current?.click();
+                              }}
+                              className="w-full h-full flex flex-col items-center justify-center gap-1 p-1 hover:bg-secondary/40 transition-colors"
+                            >
+                              <Camera className="h-4.5 w-4.5 text-muted-foreground" />
+                              <span className="text-[9px] font-bold text-muted-foreground truncate w-full px-1">{label}</span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Observações do Check-in */}
                 <div className="border rounded-lg p-3 space-y-2">
                   <span className="text-xs font-bold tracking-wide">OBSERVAÇÕES DO CHECK-IN</span>
                   <Textarea
                     value={editObsCheckin}
                     onChange={(e) => setEditObsCheckin(e.target.value)}
                     placeholder="Observações do check-in (opcional)..."
-                    rows={5}
+                    rows={3}
                     className="bg-secondary/50 border-border"
                   />
                 </div>

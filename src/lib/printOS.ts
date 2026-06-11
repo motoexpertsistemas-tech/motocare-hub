@@ -347,6 +347,21 @@ ${(() => {
       });
       html += `</tbody></table>`;
     }
+    const fotos = (os as any).fotos_checkin || [];
+    if (Array.isArray(fotos) && fotos.length > 0) {
+      html += `<div style="margin-top:10px; border-top:1px dashed #e5e7eb; padding-top:10px">
+        <div style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;margin-bottom:6px">Fotos do Check-in</div>
+        <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px">`;
+      fotos.forEach((f: any) => {
+        if (f && f.url) {
+          html += `<div style="text-align:center; border:1px solid #e5e7eb; border-radius:4px; padding:3px; background:#f8f9fa">
+            <img src="${f.url}" style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:2px" />
+            <div style="font-size:7px; font-weight:600; color:#555; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${f.label}</div>
+          </div>`;
+        }
+      });
+      html += `</div></div>`;
+    }
     html += `</div></div>`;
     return html;
   } catch { return ""; }

@@ -19,7 +19,7 @@ export interface ChecklistCategory {
 }
 
 export interface CheckinData {
-  fotos: File[];
+  fotos: (File | string | null)[];
   checklist: ChecklistCategory[];
   observacoes_checkin: string;
 }
@@ -120,23 +120,33 @@ interface CheckinStepProps {
 
 export function CheckinStep({ onContinue, onBack, clienteNome, placa }: CheckinStepProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [fotos, setFotos] = useState<File[]>([]);
+  const FOTOS_LABELS = ["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"];
+  const [fotos, setFotos] = useState<(File | string | null)[]>(Array(8).fill(null));
+  const activeSlotIndex = useRef<number | null>(null);
+
   const [checklist, setChecklist] = useState<ChecklistCategory[]>(
     JSON.parse(JSON.stringify(CHECKLIST_INICIAL))
   );
   const [observacoes, setObservacoes] = useState("");
 
-  const handleAddFotos = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const novas = Array.from(e.target.files);
-    setFotos((prev) => {
-      const total = [...prev, ...novas];
-      return total.slice(0, 10);
-    });
-    if (inputRef.current) inputRef.current.value = "";
+  const triggerUpload = (index: number) => {
+    activeSlotIndex.current = index;
+    inputRef.current?.click();
   };
 
-  const removerFoto = (i: number) => setFotos((prev) => prev.filter((_, idx) => idx !== i));
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    const index = activeSlotIndex.current;
+    if (index !== null) {
+      setFotos((prev) => {
+        const copy = [...prev];
+        copy[index] = file;
+        return copy;
+      });
+    }
+    if (inputRef.current) inputRef.current.value = "";
+  };
 
   const toggleItem = (catIdx: number, itemIdx: number) => {
     setChecklist((prev) => {
@@ -183,10 +193,10 @@ export function CheckinStep({ onContinue, onBack, clienteNome, placa }: CheckinS
               <CardTitle className="text-base flex items-center gap-2">
                 <Camera className="h-4 w-4" />
                 Fotos do Check-in
-                <Badge variant="secondary" className="ml-auto">{fotos.length}/10</Badge>
+                <Badge variant="secondary" className="ml-auto">{fotos.filter(Boolean).length}/8</Badge>
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                Registre até 10 fotos do veículo na entrada (arranhões, avarias, estado geral)
+                Registre até 8 fotos estruturadas do veículo na entrada (Frente, Traseira, Laterais e Outros)
               </p>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -194,42 +204,61 @@ export function CheckinStep({ onContinue, onBack, clienteNome, placa }: CheckinS
                 ref={inputRef}
                 type="file"
                 accept="image/*"
-                multiple
                 className="hidden"
-                onChange={handleAddFotos}
+                onChange={handleFileChange}
               />
-              <Button
-                variant="outline"
-                className="w-full gap-2 h-20 border-dashed"
-                onClick={() => inputRef.current?.click()}
-                disabled={fotos.length >= 10}
-              >
-                <Upload className="h-5 w-5" />
-                {fotos.length >= 10 ? "Limite de 10 fotos atingido" : "Adicionar fotos"}
-              </Button>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {FOTOS_LABELS.map((label, idx) => {
+                  const foto = fotos[idx];
+                  const isUrl = typeof foto === "string";
+                  const imgSrc = foto ? (isUrl ? (foto as string) : URL.createObjectURL(foto as File)) : null;
 
-              {fotos.length > 0 && (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {fotos.map((f, i) => (
-                    <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border bg-muted">
-                      <img
-                        src={URL.createObjectURL(f)}
-                        alt={`Foto ${i + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        onClick={() => removerFoto(i)}
-                        className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                      <span className="absolute bottom-0 left-0 right-0 bg-background/70 text-[10px] text-center py-0.5">
-                        {i + 1}
-                      </span>
+                  return (
+                    <div key={idx} className="relative aspect-square rounded-lg border border-border bg-secondary/20 flex flex-col items-center justify-center overflow-hidden group">
+                      {imgSrc ? (
+                        <>
+                          <img src={imgSrc} alt={label} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => window.open(imgSrc, "_blank")}
+                              className="p-1.5 rounded-full bg-white/20 text-white hover:bg-white/40"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFotos((prev) => {
+                                  const copy = [...prev];
+                                  copy[idx] = null;
+                                  return copy;
+                                });
+                              }}
+                              className="p-1.5 rounded-full bg-destructive/85 text-destructive-foreground hover:bg-destructive"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          <div className="absolute bottom-0 left-0 right-0 bg-background/80 py-0.5 text-center text-[9px] font-bold text-foreground truncate px-1">
+                            {label}
+                          </div>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => triggerUpload(idx)}
+                          className="w-full h-full flex flex-col items-center justify-center gap-1.5 p-1 hover:bg-secondary/40 transition-colors"
+                        >
+                          <Camera className="h-4.5 w-4.5 text-muted-foreground" />
+                          <span className="text-[9px] font-bold text-muted-foreground truncate w-full px-1">{label}</span>
+                        </button>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                })}
+              </div>
 
               {/* Observações inside fotos panel */}
               <Textarea

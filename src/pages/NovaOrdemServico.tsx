@@ -246,8 +246,8 @@ export default function NovaOrdemServico() {
     toast({ title: `✅ ${qtd} parcela(s) gerada(s) com sucesso!` });
   };
 
-  // Anexos
-  const [fotosCheckin, setFotosCheckin] = useState<File[]>([]);
+  // Anexos (8 slots de fotos estruturadas de check-in)
+  const [fotosCheckin, setFotosCheckin] = useState<(File | string | null)[]>(Array(8).fill(null));
 
   // Observações
   const [observacoes, setObservacoes] = useState("");
@@ -546,16 +546,7 @@ export default function NovaOrdemServico() {
     );
   };
 
-  // Fotos
-  const handleFotosCheckin = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFotosCheckin((prev) => [...prev, ...Array.from(e.target.files!)]);
-    }
-  };
-
-  const removerFoto = (index: number) => {
-    setFotosCheckin((prev) => prev.filter((_, i) => i !== index));
-  };
+  // Fotos gerenciadas no CheckinStep
 
   // Salvar OS
   const salvarOS = async () => {
@@ -610,6 +601,41 @@ export default function NovaOrdemServico() {
         .single();
 
       if (error) throw error;
+
+      // Fazer o upload das fotos de check-in para o Storage e salvar as URLs na coluna fotos_checkin
+      const FOTOS_LABELS = ["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"];
+      const urlsFotos: { label: string; url: string }[] = [];
+      const osId = (novaOS as any).id;
+
+      for (let i = 0; i < fotosCheckin.length; i++) {
+        const foto = fotosCheckin[i];
+        if (!foto) continue;
+        const label = FOTOS_LABELS[i];
+
+        if (typeof foto === "string") {
+          urlsFotos.push({ label, url: foto });
+        } else if (foto instanceof File) {
+          const ext = foto.name.split(".").pop();
+          const fileName = `${empresaId}/${osId}/${Math.random().toString(36).substring(2)}_${Date.now()}.${ext}`;
+          const { error: uploadError } = await supabase.storage.from("os-checkin").upload(fileName, foto);
+          if (uploadError) {
+            console.error(`Erro ao fazer upload da foto ${label}:`, uploadError);
+            continue;
+          }
+          const { data: { publicUrl } } = supabase.storage.from("os-checkin").getPublicUrl(fileName);
+          urlsFotos.push({ label, url: publicUrl });
+        }
+      }
+
+      if (urlsFotos.length > 0) {
+        const { error: updateFotosError } = await supabase
+          .from("ordem_servico")
+          .update({ fotos_checkin: urlsFotos } as any)
+          .eq("id", osId);
+        if (updateFotosError) {
+          console.error("Erro ao salvar URLs das fotos na OS:", updateFotosError);
+        }
+      }
 
       // Inserir itens de peças
       const allItens = [
@@ -1859,50 +1885,6 @@ export default function NovaOrdemServico() {
         </CardContent>
       </Card>
 
-      {/* ==================== ANEXOS ==================== */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">📎 Anexos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="p-4 bg-accent/20 border border-accent/30 rounded-lg mb-4">
-            <p className="text-sm text-accent-foreground">
-              Utilize este espaço para anexar comprovantes e documentos. Tamanho máximo 5Mb.
-            </p>
-          </div>
-
-          <input type="file" multiple accept="image/*,.pdf" onChange={handleFotosCheckin} className="hidden" id="upload-anexos" />
-          <label htmlFor="upload-anexos">
-            <Button type="button" asChild variant="outline">
-              <span>
-                <Upload size={16} className="mr-2" />
-                Selecionar arquivo
-              </span>
-            </Button>
-          </label>
-
-          {fotosCheckin.length > 0 && (
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mt-4">
-              {fotosCheckin.map((foto, index) => (
-                <div key={index} className="relative group">
-                  <div className="aspect-square rounded-lg overflow-hidden bg-secondary">
-                    <img src={URL.createObjectURL(foto)} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removerFoto(index)}
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                  >
-                    <X size={14} />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* ==================== BOTÃO CHECKLIST ==================== */}
       {checkinData?.checklist && (
@@ -1962,6 +1944,29 @@ export default function NovaOrdemServico() {
                 <div className="border rounded-lg p-3">
                   <span className="text-xs font-bold tracking-wide">OBSERVAÇÕES DO CHECK-IN</span>
                   <p className="text-sm mt-1 text-muted-foreground">{checkinData.observacoes_checkin}</p>
+                </div>
+              )}
+
+              {fotosCheckin.some(Boolean) && (
+                <div className="border rounded-lg p-3">
+                  <span className="text-xs font-bold tracking-wide block mb-2">FOTOS DO CHECK-IN</span>
+                  <div className="grid grid-cols-4 gap-2">
+                    {fotosCheckin.map((foto, idx) => {
+                      if (!foto) return null;
+                      const FOTOS_LABELS = ["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"];
+                      const label = FOTOS_LABELS[idx];
+                      const isUrl = typeof foto === "string";
+                      const imgSrc = isUrl ? (foto as string) : URL.createObjectURL(foto as File);
+                      return (
+                        <div key={idx} className="relative aspect-square rounded overflow-hidden border bg-muted group cursor-pointer" onClick={() => window.open(imgSrc, "_blank")}>
+                          <img src={imgSrc} alt={label} className="w-full h-full object-cover" />
+                          <div className="absolute bottom-0 left-0 right-0 bg-background/80 py-0.5 text-center text-[9px] font-bold text-foreground truncate px-1">
+                            {label}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
