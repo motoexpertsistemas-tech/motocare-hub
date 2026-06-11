@@ -41,6 +41,91 @@ interface PrecoVenda {
 
 import { toBRL, fromBRL } from "@/lib/utils";
 
+function gerarSkuAutomatico(nomeProduto: string, codigoFabricante?: string, marcaProduto?: string): string {
+  if (!nomeProduto) return '';
+
+  // 1. Remove acentos e joga para maiúsculo
+  let texto = nomeProduto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+
+  // 2. Remove palavras irrelevantes (stop words) ou o termo "COD:" se o usuário digitar
+  texto = texto.replace(/COD\s*:\s*\d*/g, '').replace(/SHINERAY/g, '');
+
+  // 3. Pega as palavras chaves principais
+  const palavras = texto.split(' ').filter(p => p.trim() !== '');
+  
+  const produto = palavras[0] || 'PROD';
+  const complemento = palavras.slice(1, 4).join('');
+  
+  // 4. Formata o código final com marca e código do fabricante
+  const prefixoMarca = marcaProduto ? `-${marcaProduto.substring(0, 4).toUpperCase()}` : '';
+  const sufixoCodigo = codigoFabricante ? `-${codigoFabricante.trim()}` : '';
+  
+  // Limpa traços duplicados ou caracteres especiais restantes
+  const skuGerado = `${produto}-${complemento}${prefixoMarca}${sufixoCodigo}`
+    .replace(/[^A-Z0-9-]/g, '') // Mantém apenas letras, números e traços
+    .substring(0, 30); // Limita tamanho
+
+  return skuGerado;
+}
+
+// Extração de Aplicação
+const MODELOS_MOTOS = [
+  'POP 100', 'POP 110', 'POP 110I',
+  'BIZ 100', 'BIZ 110', 'BIZ 125',
+  'TITAN 125', 'TITAN 150', 'TITAN 160',
+  'FAN 125', 'FAN 150', 'FAN 160',
+  'BROS 150', 'BROS 160', 'XRE 190', 'XRE 300',
+  'YBR 125', 'FACTOR 150', 'FAZER 250'
+];
+
+const MARCAS_MOTOS = ['HONDA', 'YAMAHA', 'SHINERAY', 'SUZUKI', 'TRAXX'];
+
+export function extrairAplicacao(titulo: string): string {
+  if (!titulo) return '';
+
+  const textoLimpo = titulo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+
+  let modelosEncontrados: string[] = [];
+  let marcasEncontradas: string[] = [];
+
+  MODELOS_MOTOS.forEach(modelo => {
+    const regex = new RegExp(`\\b${modelo}\\b`, 'g');
+    if (regex.test(textoLimpo)) {
+      modelosEncontrados.push(modelo);
+    }
+  });
+
+  if (modelosEncontrados.length === 0) {
+    if (textoLimpo.includes('POP') && textoLimpo.includes('100')) modelosEncontrados.push('POP 100');
+    if (textoLimpo.includes('POP') && textoLimpo.includes('110')) modelosEncontrados.push('POP 110');
+    if (textoLimpo.includes('BIZ') && textoLimpo.includes('100')) modelosEncontrados.push('BIZ 100');
+    if (textoLimpo.includes('BIZ') && textoLimpo.includes('125')) modelosEncontrados.push('BIZ 125');
+    if (textoLimpo.includes('TITAN') && textoLimpo.includes('150')) modelosEncontrados.push('TITAN 150');
+    if (textoLimpo.includes('FAN') && textoLimpo.includes('160')) modelosEncontrados.push('FAN 160');
+  }
+
+  MARCAS_MOTOS.forEach(marca => {
+    const regex = new RegExp(`\\b${marca}\\b`, 'g');
+    if (regex.test(textoLimpo)) {
+      marcasEncontradas.push(marca);
+    }
+  });
+
+  const modelosFinais = [...new Set(modelosEncontrados)];
+  const marcasFinais = [...new Set(marcasEncontradas)];
+
+  if (modelosFinais.length > 0) {
+    const stringModelos = modelosFinais.join(', ');
+    const stringMarcas = marcasFinais.length > 0 ? ` ${marcasFinais.join('/')}` : '';
+    return `${stringModelos}${stringMarcas}`.trim();
+  }
+
+  return '';
+}
+
 export default function EditarProduto() {
   const { id } = useParams();
   const isNew = !id;
@@ -122,7 +207,8 @@ export default function EditarProduto() {
 
   // Form state
   const [nome, setNome] = useState("");
-  const [codigoCpl, setCodigoCpl] = useState(isNew ? generateCode() : "");
+  const [codigoCpl, setCodigoCpl] = useState("");
+  const [skuEditadoManualmente, setSkuEditadoManualmente] = useState(false);
   const [marca, setMarca] = useState("");
   const [categoria, setCategoria] = useState("");
   const [imagemUrl, setImagemUrl] = useState("");
@@ -131,6 +217,7 @@ export default function EditarProduto() {
   const [peso, setPeso] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [aplicacoes, setAplicacoes] = useState<string[]>([]);
+  const [aplicacaoEditadaManualmente, setAplicacaoEditadaManualmente] = useState(false);
   const [cor, setCor] = useState("");
   const [novaAplicacao, setNovaAplicacao] = useState("");
 
@@ -271,7 +358,8 @@ export default function EditarProduto() {
   useEffect(() => {
     if (!product) return;
     setNome(product.nome);
-    setCodigoCpl(product.codigo_cpl);
+    setCodigoCpl(product.codigo_cpl || "");
+    if (product.codigo_cpl) setSkuEditadoManualmente(true);
     setMarca(product.marca || "");
     setCategoria(product.categoria || "");
     setImagemUrl(product.imagem_url || "");
@@ -280,6 +368,7 @@ export default function EditarProduto() {
     setPeso((product as any).peso?.toString() || "");
     setObservacoes((product as any).observacoes || "");
     setAplicacoes(product.aplicacoes || []);
+    if (product.aplicacoes && product.aplicacoes.length > 0) setAplicacaoEditadaManualmente(true);
     setCor((product as any).cor || "");
     setPrecoCusto((product as any).preco_custo ? Number((product as any).preco_custo).toFixed(2) : "0.00");
     setDespesasAcessorias((product as any).despesas_acessorias ? Number((product as any).despesas_acessorias).toFixed(2) : "0.00");
@@ -435,6 +524,7 @@ export default function EditarProduto() {
     if (trimmed && !aplicacoes.includes(trimmed)) {
       setAplicacoes([...aplicacoes, trimmed]);
       setNovaAplicacao("");
+      setAplicacaoEditadaManualmente(true);
     }
   };
 
@@ -591,17 +681,50 @@ export default function EditarProduto() {
           <Card className="glass-panel">
             <CardContent className="p-6 space-y-4">
               <div className="grid gap-4 md:grid-cols-4">
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 md:col-span-2">
                   <Label className="text-xs text-muted-foreground">Nome do Produto *</Label>
-                  <Input value={nome} onChange={(e) => setNome(e.target.value)} className="bg-secondary/50" />
+                  <Input 
+                    value={nome} 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNome(val);
+                      if (!skuEditadoManualmente) setCodigoCpl(gerarSkuAutomatico(val, codigoFornecedor, marca));
+                      if (!aplicacaoEditadaManualmente) {
+                        const aplicacaoSugerida = extrairAplicacao(val);
+                        if (aplicacaoSugerida) {
+                          setAplicacoes([aplicacaoSugerida]);
+                        } else {
+                          setAplicacoes([]);
+                        }
+                      }
+                    }} 
+                    className="bg-secondary/50" 
+                    placeholder="Ex: ANEL ESCAPE POP BIZ 100..."
+                  />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Código</Label>
-                  <Input value={codigoCpl} onChange={(e) => setCodigoCpl(e.target.value)} className="bg-secondary/50 font-mono" />
+                <div className="space-y-1.5 md:col-span-2">
+                  <Label className="text-xs text-muted-foreground">SKU / Código (Auto)</Label>
+                  <Input 
+                    value={codigoCpl} 
+                    onChange={(e) => {
+                      setCodigoCpl(e.target.value);
+                      setSkuEditadoManualmente(true);
+                    }} 
+                    className="bg-gray-50 border-gray-300 font-mono text-blue-600 font-bold dark:bg-black" 
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Cód. Fornecedor</Label>
-                  <Input value={codigoFornecedor} onChange={(e) => setCodigoFornecedor(e.target.value)} className="bg-secondary/50 font-mono" placeholder="Ex: SPT-123456" />
+                  <Input 
+                    value={codigoFornecedor} 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCodigoFornecedor(val);
+                      if (!skuEditadoManualmente) setCodigoCpl(gerarSkuAutomatico(nome, val, marca));
+                    }} 
+                    className="bg-secondary/50 font-mono" 
+                    placeholder="Ex: SPT-123456" 
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Cód. Barras (EAN)</Label>
@@ -609,7 +732,15 @@ export default function EditarProduto() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Marca</Label>
-                  <Input value={marca} onChange={(e) => setMarca(e.target.value)} className="bg-secondary/50" />
+                  <Input 
+                    value={marca} 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setMarca(val);
+                      if (!skuEditadoManualmente) setCodigoCpl(gerarSkuAutomatico(nome, codigoFornecedor, val));
+                    }} 
+                    className="bg-secondary/50" 
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Categoria</Label>
@@ -732,7 +863,10 @@ export default function EditarProduto() {
                     {aplicacoes.map((app, i) => (
                       <Badge key={i} variant="secondary" className="gap-1 pr-1">
                         {app}
-                        <button onClick={() => setAplicacoes(aplicacoes.filter((_, idx) => idx !== i))} className="hover:text-destructive">
+                        <button onClick={() => {
+                          setAplicacoes(aplicacoes.filter((_, idx) => idx !== i));
+                          setAplicacaoEditadaManualmente(true);
+                        }} className="hover:text-destructive">
                           <X className="h-3 w-3" />
                         </button>
                       </Badge>
