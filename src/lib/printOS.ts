@@ -37,6 +37,7 @@ interface OSPrintData {
   valor_outros: number | null;
   valor_total: number | null;
   created_at: string;
+  condicoes_pagamento: any[] | null;
 }
 
 const statusLabels: Record<string, string> = {
@@ -51,6 +52,12 @@ function fmtBRL(v: number | null | undefined) {
 
 function fmtDate(d: string | null | undefined) {
   if (!d) return "—";
+  if (d.includes("-")) {
+    const parts = d.split("T")[0].split("-");
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+  }
   return new Date(d).toLocaleDateString("pt-BR");
 }
 
@@ -267,6 +274,41 @@ export async function printOS(osId: string) {
     </div>
   </div>
 </div>
+
+<!-- CONDIÇÕES DE PAGAMENTO -->
+${(() => {
+  try {
+    const parcelas = os.condicoes_pagamento;
+    if (!parcelas || !Array.isArray(parcelas) || parcelas.length === 0) return "";
+    return `<div class="section" style="page-break-inside:avoid">
+      <div class="section-title">💳 Condições de Pagamento</div>
+      <div class="section-body" style="padding:0">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:8%">Parc.</th>
+              <th style="width:15%">Vencimento</th>
+              <th style="width:25%">Forma de Pagamento</th>
+              <th style="width:22%">Plano de Contas</th>
+              <th style="width:15%">Observação</th>
+              <th class="text-right" style="width:15%">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${parcelas.map((p: any, idx: number) => `<tr>
+              <td>${idx + 1}</td>
+              <td>${fmtDate(p.vencimento)}</td>
+              <td>${p.forma_pagamento || "—"}</td>
+              <td>${p.plano_contas || "—"}</td>
+              <td>${p.observacao || "—"}</td>
+              <td class="text-right"><strong>R$ ${fmtBRL(p.valor)}</strong></td>
+            </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  } catch { return ""; }
+})()}
 
 <!-- CHECK DO VEÍCULO -->
 ${(() => {
