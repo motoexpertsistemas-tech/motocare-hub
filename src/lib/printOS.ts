@@ -76,42 +76,48 @@ export async function printOS(osId: string) {
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>OS ${os.numero_os}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Segoe UI',Arial,sans-serif;padding:25px 30px;color:#222;font-size:12px;line-height:1.5}
-  .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #DC2626;padding-bottom:12px;margin-bottom:15px}
-  .header h1{font-size:18px;color:#DC2626;margin-bottom:2px}
-  .header .empresa{font-size:11px;color:#555}
-  .header .os-num{font-size:22px;font-weight:bold;color:#DC2626;text-align:right}
-  .header .os-status{display:inline-block;background:#DC2626;color:#fff;padding:3px 12px;border-radius:4px;font-size:11px;font-weight:bold;margin-top:4px}
-  .section{margin-bottom:14px;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden}
-  .section-title{background:#f8f9fa;padding:7px 12px;font-weight:bold;font-size:12px;color:#DC2626;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:6px}
-  .section-body{padding:10px 12px}
-  .grid{display:grid;gap:6px 20px}
+  body{font-family:'Segoe UI',Arial,sans-serif;padding:20px 25px;color:#222;font-size:11px;line-height:1.4}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #DC2626;padding-bottom:8px;margin-bottom:10px}
+  .header h1{font-size:16px;color:#DC2626;margin-bottom:2px}
+  .header .empresa{font-size:10px;color:#555;line-height:1.3}
+  .header .os-num{font-size:20px;font-weight:bold;color:#DC2626;text-align:right}
+  .header .os-status{display:inline-block;background:#DC2626;color:#fff;padding:2px 10px;border-radius:4px;font-size:10px;font-weight:bold;margin-top:3px}
+  .section{margin-bottom:10px;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden}
+  .section-title{background:#f8f9fa;padding:5px 10px;font-weight:bold;font-size:11px;color:#DC2626;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:6px}
+  .section-body{padding:6px 10px}
+  .grid{display:grid;gap:4px 16px}
   .grid-2{grid-template-columns:1fr 1fr}
   .grid-3{grid-template-columns:1fr 1fr 1fr}
   .grid-4{grid-template-columns:1fr 1fr 1fr 1fr}
   .grid-6{grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr}
-  .field label{font-size:10px;color:#888;text-transform:uppercase;font-weight:600;letter-spacing:0.3px}
-  .field p{font-size:12px;font-weight:500;margin-top:1px}
-  table{width:100%;border-collapse:collapse;font-size:11px}
-  th{background:#f8f9fa;padding:6px 8px;text-align:left;font-weight:600;border-bottom:2px solid #e5e7eb;font-size:10px;text-transform:uppercase;color:#666}
-  td{padding:5px 8px;border-bottom:1px solid #f0f0f0}
+  .field label{font-size:9px;color:#888;text-transform:uppercase;font-weight:600;letter-spacing:0.3px}
+  .field p{font-size:11px;font-weight:500;margin-top:1px}
+  table{width:100%;border-collapse:collapse;font-size:10px}
+  th{background:#f8f9fa;padding:4px 6px;text-align:left;font-weight:600;border-bottom:2px solid #e5e7eb;font-size:9px;text-transform:uppercase;color:#666}
+  td{padding:4px 6px;border-bottom:1px solid #f0f0f0}
   tr:last-child td{border-bottom:none}
   .text-right{text-align:right}
   .total-row{background:#fff7ed;font-weight:bold}
-  .total-box{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;text-align:center}
-  .total-box .item{border:1px solid #e5e7eb;border-radius:4px;padding:6px}
-  .total-box .item label{font-size:9px;color:#888;text-transform:uppercase;display:block}
-  .total-box .item p{font-size:13px;font-weight:bold;margin-top:2px}
+  .total-box{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;text-align:center}
+  .total-box .item{border:1px solid #e5e7eb;border-radius:4px;padding:4px}
+  .total-box .item label{font-size:8px;color:#888;text-transform:uppercase;display:block}
+  .total-box .item p{font-size:11px;font-weight:bold;margin-top:1px}
   .total-box .item.destaque{background:#DC2626;color:#fff;border-color:#DC2626}
   .total-box .item.destaque label{color:#fff9}
-  .obs-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .obs-box{border:1px solid #e5e7eb;border-radius:4px;padding:8px}
-  .obs-box h4{font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px}
-  .obs-box p{font-size:11px;min-height:40px}
-  .footer{margin-top:20px;border-top:2px solid #e5e7eb;padding-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center}
-  .footer .sig{border-top:1px solid #333;padding-top:4px;margin-top:40px;font-size:11px}
-  @media print{body{padding:15px 20px}@page{margin:10mm}}
-  .badge-status{font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600}
+  .obs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .obs-box{border:1px solid #e5e7eb;border-radius:4px;padding:6px}
+  .obs-box h4{font-size:9px;color:#888;text-transform:uppercase;margin-bottom:3px}
+  .obs-box p{font-size:10px;min-height:20px}
+  .footer{margin-top:12px;border-top:2px solid #e5e7eb;padding-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center}
+  .footer .sig{border-top:1px solid #333;padding-top:3px;margin-top:25px;font-size:10px}
+  @media print{
+    @page{size:A4 portrait;margin:8mm 10mm}
+    body{padding:0;margin:0}
+    .section{page-break-inside:avoid}
+    .obs-grid{page-break-inside:avoid}
+    .footer{page-break-inside:avoid}
+  }
+  .badge-status{font-size:9px;padding:1px 6px;border-radius:3px;font-weight:600}
   .badge-concluido{background:#dcfce7;color:#16a34a}
   .badge-pendente{background:#fef3c7;color:#d97706}
 </style></head><body>
@@ -144,22 +150,17 @@ export async function printOS(osId: string) {
       <div class="field"><label>Canal de Venda</label><p>${os.canal_venda || "—"}</p></div>
       <div class="field"><label>Prioridade</label><p>${os.prioridade || "Normal"}</p></div>
     </div>
-    <div class="grid grid-4" style="margin-top:6px">
+    <div class="grid grid-4" style="margin-top:4px">
       <div class="field"><label>Entrada</label><p>${fmtDate(os.data_entrada)}</p></div>
       <div class="field"><label>Previsão Saída</label><p>${fmtDate(os.data_prevista_conclusao)}</p></div>
       <div class="field"><label>Centro de Custo</label><p>${os.centro_custo || "—"}</p></div>
       <div class="field"><label>Criado em</label><p>${fmtDate(os.created_at)}</p></div>
     </div>
-  </div>
-</div>
-
-<!-- RESPONSÁVEIS -->
-<div class="section">
-  <div class="section-title">👥 Responsáveis</div>
-  <div class="section-body">
-    <div class="grid grid-2">
+    <div class="grid grid-4" style="margin-top:4px">
       <div class="field"><label>Vendedor / Responsável</label><p>${os.vendedor || "—"}</p></div>
       <div class="field"><label>Técnico</label><p>${os.tecnico_responsavel || "—"}</p></div>
+      <div class="field"></div>
+      <div class="field"></div>
     </div>
   </div>
 </div>
@@ -174,19 +175,19 @@ export async function printOS(osId: string) {
       <div class="field"><label>Ano</label><p>${os.veiculo_ano || "—"}</p></div>
       <div class="field"><label>Chassi</label><p>${os.veiculo_chassi || "—"}</p></div>
     </div>
-    <div class="grid grid-4" style="margin-top:6px">
+    <div class="grid grid-4" style="margin-top:4px">
       <div class="field"><label>KM Atual</label><p>${os.km_entrada ?? "—"}</p></div>
       <div class="field"><label>KM Última Revisão</label><p>${os.km_ultima_revisao ?? "—"}</p></div>
       <div class="field"><label>Nível Combustível</label><p>${os.nivel_combustivel || "—"}</p></div>
       <div class="field"><label>Óleo Recomendado</label><p>${os.oleo_recomendado || "—"}</p></div>
     </div>
-    <div class="grid grid-3" style="margin-top:6px">
+    <div class="grid grid-3" style="margin-top:4px">
       <div class="field"><label>Condições</label><p>${os.condicoes || "—"}</p></div>
       <div class="field"><label>Defeitos</label><p>${os.defeito_relatado || "—"}</p></div>
       <div class="field"><label>Acessórios</label><p>${os.acessorios || "—"}</p></div>
     </div>
-    ${os.solucao ? `<div style="margin-top:6px"><div class="field"><label>Solução</label><p>${os.solucao}</p></div></div>` : ""}
-    ${os.ultima_troca_oleo ? `<div style="margin-top:6px"><div class="field"><label>Última Troca de Óleo</label><p>${os.ultima_troca_oleo}</p></div></div>` : ""}
+    ${os.solucao ? `<div style="margin-top:4px"><div class="field"><label>Solução</label><p>${os.solucao}</p></div></div>` : ""}
+    ${os.ultima_troca_oleo ? `<div style="margin-top:4px"><div class="field"><label>Última Troca de Óleo</label><p>${os.ultima_troca_oleo}</p></div></div>` : ""}
   </div>
 </div>
 
