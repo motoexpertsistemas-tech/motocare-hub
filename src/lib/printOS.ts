@@ -134,6 +134,11 @@ export async function printOS(osId: string) {
       ${[loja?.logradouro, loja?.numero, loja?.bairro, loja?.cidade, loja?.estado, loja?.cep].filter(Boolean).join(", ")}
     </div>
   </div>
+  <div style="font-size:11px;color:#222;margin-top:10px;border-left:1px solid #e5e7eb;padding-left:15px;min-width:160px">
+    <span style="font-size:9px;color:#888;text-transform:uppercase;font-weight:600;display:block;letter-spacing:0.3px;margin-bottom:2px">Responsáveis</span>
+    <div><strong>Vendedor:</strong> ${os.vendedor || "—"}</div>
+    <div style="margin-top:2px"><strong>Técnico:</strong> ${os.tecnico_responsavel || "—"}</div>
+  </div>
   <div style="text-align:right">
     <div class="os-num">${os.numero_os}</div>
     <div class="os-status">${statusLabels[os.status] || os.status?.toUpperCase()}</div>
@@ -155,12 +160,6 @@ export async function printOS(osId: string) {
       <div class="field"><label>Previsão Saída</label><p>${fmtDate(os.data_prevista_conclusao)}</p></div>
       <div class="field"><label>Centro de Custo</label><p>${os.centro_custo || "—"}</p></div>
       <div class="field"><label>Criado em</label><p>${fmtDate(os.created_at)}</p></div>
-    </div>
-    <div class="grid grid-4" style="margin-top:4px">
-      <div class="field"><label>Vendedor / Responsável</label><p>${os.vendedor || "—"}</p></div>
-      <div class="field"><label>Técnico</label><p>${os.tecnico_responsavel || "—"}</p></div>
-      <div class="field"></div>
-      <div class="field"></div>
     </div>
   </div>
 </div>
