@@ -849,7 +849,7 @@ export default function DetalhesOrdemServico() {
               <div><Label>Defeitos</Label><Textarea value={editEquipamento.defeitos} onChange={(e) => setEditEquipamento({ ...editEquipamento, defeitos: e.target.value })} className="bg-secondary/50 border-border min-h-[100px]" placeholder="Defeitos relatados..." /></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><Label>Observações</Label><Textarea value={editEquipamento.acessorios} onChange={(e) => setEditEquipamento({ ...editEquipamento, acessorios: e.target.value })} className="bg-secondary/50 border-border min-h-[100px]" placeholder="Observações..." /></div>
+              <div><Label>Acessórios</Label><Textarea value={editEquipamento.acessorios} onChange={(e) => setEditEquipamento({ ...editEquipamento, acessorios: e.target.value })} className="bg-secondary/50 border-border min-h-[100px]" placeholder="Acessórios do veículo..." /></div>
               <div><Label>Solução</Label><Textarea value={editEquipamento.solucao} onChange={(e) => setEditEquipamento({ ...editEquipamento, solucao: e.target.value })} className="bg-secondary/50 border-border min-h-[100px]" placeholder="Solução aplicada..." /></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

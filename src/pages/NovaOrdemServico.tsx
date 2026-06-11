@@ -1107,12 +1107,12 @@ export default function NovaOrdemServico() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-               <Label>Observações</Label>
+               <Label>Acessórios</Label>
                <Textarea
                  value={equipamento.acessorios}
                  onChange={(e) => setEquipamento({ ...equipamento, acessorios: e.target.value })}
                  className="bg-secondary/50 border-border min-h-[100px]"
-                 placeholder="Observações..."
+                 placeholder="Acessórios do veículo..."
                />
             </div>
             <div>
