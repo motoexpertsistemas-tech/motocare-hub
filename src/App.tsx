@@ -205,7 +205,7 @@ const App = () => {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/os" element={<OrdensServico />} />
                 <Route path="/os/agenda" element={<AgendaOS />} />
-                <Route path="/os/revisoes-agendadas" element={<RevisoesAgendadas />} />
+                <Route path="/os/revisoes-agendadas" element={<AgendaOS defaultTab="revisoes" />} />
                 <Route path="/os/situacoes" element={<SituacoesOS />} />
                 <Route path="/os/nova" element={<NovaOrdemServico />} />
                 <Route path="/os/:id" element={<DetalhesOrdemServico />} />

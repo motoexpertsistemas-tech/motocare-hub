@@ -52,7 +52,7 @@ const fmtDateTime = (iso: string | null) => {
   return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 };
 
-export default function RevisoesAgendadas() {
+export default function RevisoesAgendadas({ hideHeader = false }: { hideHeader?: boolean }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [revisoes, setRevisoes] = useState<RevisaoOS[]>([]);
@@ -150,22 +150,24 @@ export default function RevisoesAgendadas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3">
-          <CalendarCheck2 className="h-6 w-6 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold">Revisões Agendadas</h1>
-            <p className="text-sm text-muted-foreground">
-              Visualize, confirme ou recuse os agendamentos vindos do assistente virtual
-            </p>
+      {!hideHeader && (
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <CalendarCheck2 className="h-6 w-6 text-primary" />
+            <div>
+              <h1 className="text-2xl font-bold">Revisões Agendadas</h1>
+              <p className="text-sm text-muted-foreground">
+                Visualize, confirme ou recuse os agendamentos vindos do assistente virtual
+              </p>
+            </div>
           </div>
+          <Button variant="outline" onClick={fetchData} disabled={loading}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Atualizar"}
+          </Button>
         </div>
-        <Button variant="outline" onClick={fetchData} disabled={loading}>
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Atualizar"}
-        </Button>
-      </div>
+      )}
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 flex-wrap items-center">
         {FILTROS.map((f) => (
           <Button
             key={f.id}
@@ -178,6 +180,14 @@ export default function RevisoesAgendadas() {
             <Badge variant="secondary" className="ml-1">{(counts as any)[f.id]}</Badge>
           </Button>
         ))}
+        
+        {hideHeader && (
+          <Button variant="outline" size="sm" onClick={fetchData} disabled={loading} className="gap-2">
+            <Loader2 className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+        )}
+
         <div className="relative ml-auto w-full sm:w-72">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input

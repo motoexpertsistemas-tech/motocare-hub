@@ -113,7 +113,6 @@ const navItems: NavItem[] = [
     ],
   },
   { icon: CalendarDays, label: "Agenda OS", path: "/os/agenda", roles: ["ADMIN", "GERENTE", "MECÂNICO"] },
-  { icon: CalendarDays, label: "Revisões Agendadas", path: "/os/revisoes-agendadas", roles: ["ADMIN", "GERENTE", "MECÂNICO"] },
   {
     icon: Wrench, label: "Serviços / Mão de obra", path: "/servicos", roles: ["ADMIN", "GERENTE", "MECÂNICO"],
     children: [

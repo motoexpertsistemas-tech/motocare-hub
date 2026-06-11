@@ -6,6 +6,7 @@ import {
   CheckCircle2, Circle, ArrowRight, Sparkles, X
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEmpresa } from "@/contexts/EmpresaContext";
 
 const ONBOARDING_KEY = "ottotech_onboarding_done";
 
@@ -62,45 +63,68 @@ const steps: Step[] = [
 ];
 
 export function OnboardingModal() {
+  const { empresaId } = useEmpresa();
   const [open, setOpen] = useState(false);
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
 
   useEffect(() => {
-    const done = localStorage.getItem(ONBOARDING_KEY);
+    if (!empresaId) return;
+
+    const onboardingKey = `ottotech_onboarding_done_${empresaId}`;
+    const done = localStorage.getItem(onboardingKey);
     if (!done) {
       setOpen(true);
+      localStorage.setItem(onboardingKey, "true");
     }
+
     // Load completed steps
     const comp: Record<string, boolean> = {};
     steps.forEach((s) => {
-      comp[s.id] = localStorage.getItem(s.checkKey) === "true";
+      const stepKey = `${s.checkKey}_${empresaId}`;
+      comp[s.id] = localStorage.getItem(stepKey) === "true";
     });
     setCompleted(comp);
-  }, []);
+  }, [empresaId]);
 
   const completedCount = Object.values(completed).filter(Boolean).length;
   const progress = Math.round((completedCount / steps.length) * 100);
 
   const handleGoToStep = (step: Step) => {
-    localStorage.setItem(step.checkKey, "true");
+    if (empresaId) {
+      const stepKey = `${step.checkKey}_${empresaId}`;
+      localStorage.setItem(stepKey, "true");
+      const onboardingKey = `ottotech_onboarding_done_${empresaId}`;
+      localStorage.setItem(onboardingKey, "true");
+    }
     setCompleted((prev) => ({ ...prev, [step.id]: true }));
     setOpen(false);
     navigate(step.path);
   };
 
   const handleDismiss = () => {
-    localStorage.setItem(ONBOARDING_KEY, "true");
+    if (empresaId) {
+      const onboardingKey = `ottotech_onboarding_done_${empresaId}`;
+      localStorage.setItem(onboardingKey, "true");
+    }
     setOpen(false);
   };
 
   const handleSkip = () => {
-    localStorage.setItem(ONBOARDING_KEY, "true");
+    if (empresaId) {
+      const onboardingKey = `ottotech_onboarding_done_${empresaId}`;
+      localStorage.setItem(onboardingKey, "true");
+    }
     setOpen(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(val) => {
+      setOpen(val);
+      if (!val && empresaId) {
+        localStorage.setItem(`ottotech_onboarding_done_${empresaId}`, "true");
+      }
+    }}>
       <DialogContent className="sm:max-w-lg gap-0 p-0 overflow-hidden">
         {/* Header with gradient */}
         <div className="gradient-primary px-6 py-8 text-center relative">

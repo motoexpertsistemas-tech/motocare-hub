@@ -449,7 +449,7 @@ export default function OrdensServico() {
         <Badge
           variant="outline"
           className="px-4 py-2 text-xs font-semibold cursor-pointer transition-all duration-300 rounded-full border border-dashed border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/60 hover:scale-105 active:scale-95 shadow-sm hover:shadow flex items-center gap-2"
-          onClick={() => navigate("/os/revisoes-agendadas")}
+          onClick={() => navigate("/os/agenda?tab=revisoes")}
         >
           <CalendarCheck2 className="h-4 w-4 text-primary animate-pulse" />
           <span className="font-medium tracking-wide">Revisões Agendadas</span>
