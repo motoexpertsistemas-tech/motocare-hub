@@ -795,32 +795,7 @@ export default function OrdensServico() {
                       )}
                     </div>
 
-                    {/* Progress + Service Badges */}
-                    {(
-                      <div className="px-5 py-3 border-t border-border/50 space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-muted-foreground">Progresso: {doneItens}/{totalItens} serviços</span>
-                          <span className="font-bold text-primary">{progressPct}%</span>
-                        </div>
-                        <Progress value={progressPct} className="h-2" />
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {itens.map((item, i) => (
-                            <Badge
-                              key={i}
-                              variant="outline"
-                              className={
-                                item.status === "concluido"
-                                  ? "bg-primary/15 text-primary border-primary/30 text-[11px] line-through"
-                                  : "text-muted-foreground border-border text-[11px]"
-                              }
-                            >
-                              {item.status === "concluido" && <CheckCircle2 className="h-3 w-3 mr-1" />}
-                              {item.descricao}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+
 
                     {/* Footer */}
                     <div className="flex items-center justify-between px-5 py-3 border-t border-border/50 bg-secondary/20">

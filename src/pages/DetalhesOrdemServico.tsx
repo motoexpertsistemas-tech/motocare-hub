@@ -1600,24 +1600,7 @@ export default function DetalhesOrdemServico() {
         </Card>
       </Collapsible>
 
-      {totalItens > 0 && (
-        <Card className="glass-panel">
-          <CardContent className="py-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Progresso: {itensConcluidos}/{totalItens} serviços/peças</span>
-              <span className={`text-sm font-bold ${progressPercent === 100 ? "text-green-600" : "text-primary"}`}>{progressPercent}%</span>
-            </div>
-            <Progress value={progressPercent} className="h-3" />
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {itens.map((item) => (
-                <Badge key={item.id} variant={item.status === "concluido" ? "default" : "outline"} className={`text-[10px] ${item.status === "concluido" ? "bg-green-600 text-white line-through" : ""}`}>
-                  {item.status === "concluido" && <CheckCircle2 className="h-3 w-3 mr-1" />}{item.descricao}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* Peças */}
       <Card className="glass-panel">
