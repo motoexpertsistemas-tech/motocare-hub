@@ -102,8 +102,8 @@ export async function printOS(osId: string) {
   .total-box .item{border:1px solid #e5e7eb;border-radius:4px;padding:4px}
   .total-box .item label{font-size:8px;color:#888;text-transform:uppercase;display:block}
   .total-box .item p{font-size:11px;font-weight:bold;margin-top:1px}
-  .total-box .item.destaque{background:#DC2626;color:#fff;border-color:#DC2626}
-  .total-box .item.destaque label{color:#fff9}
+  .total-box .item.destaque{background:#fef2f2;color:#991b1b;border:1.5px solid #ef4444;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .total-box .item.destaque label{color:#ef4444;font-weight:600}
   .obs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .obs-box{border:1px solid #e5e7eb;border-radius:4px;padding:6px}
   .obs-box h4{font-size:9px;color:#888;text-transform:uppercase;margin-bottom:3px}
