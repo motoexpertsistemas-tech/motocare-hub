@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Camera, Upload, X, ArrowLeft, ArrowRight, CheckCircle2, AlertTriangle, Wrench, Eye } from "lucide-react";
+import { Camera, Upload, X, ArrowLeft, ArrowRight, CheckCircle2, AlertTriangle, Wrench, Eye, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 
