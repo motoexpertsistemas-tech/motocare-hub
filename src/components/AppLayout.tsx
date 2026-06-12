@@ -104,22 +104,25 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  // Dashboard
   { icon: LayoutDashboard, label: "Dashboard & Analytics", path: "/", roles: ["ADMIN", "GERENTE", "VENDEDOR", "MECÂNICO"] },
+
+  // Cadastros
   {
-    icon: Wrench, label: "Ordens de serviços", path: "/os", roles: ["ADMIN", "GERENTE", "MECÂNICO"],
+    icon: ClipboardCheck, label: "Cadastros", path: "/cadastros", roles: ["ADMIN", "GERENTE", "VENDEDOR"],
     children: [
-      { label: "Gerenciar O.S.", path: "/os", icon: ClipboardList },
-      { label: "Situações", path: "/os/situacoes", icon: Settings },
+      { label: "Clientes", path: "/clientes", icon: Users },
+      { label: "Fornecedores", path: "/fornecedores", icon: Truck },
+      { label: "Funcionários", path: "/cadastros/funcionarios", icon: UserCheck },
+      { label: "Transportadoras", path: "/cadastros/transportadoras", icon: Truck },
+      { label: "Categorias", path: "/cadastros/categorias", icon: Layers },
     ],
   },
+
+  // Agenda
   { icon: CalendarDays, label: "Agenda OS", path: "/os/agenda", roles: ["ADMIN", "GERENTE", "MECÂNICO"] },
-  {
-    icon: Wrench, label: "Serviços / Mão de obra", path: "/servicos", roles: ["ADMIN", "GERENTE", "MECÂNICO"],
-    children: [
-      { label: "Tabela de Preços", path: "/servicos", icon: ClipboardList },
-      { label: "Custo de Homem/Hora", path: "/servicos/custo-homem-hora", icon: Clock },
-    ],
-  },
+
+  // Estoque & Catálogo
   {
     icon: Package, label: "Produtos", path: "/produtos", roles: ["ADMIN", "GERENTE", "VENDEDOR"],
     children: [
@@ -143,6 +146,8 @@ const navItems: NavItem[] = [
       { label: "Configurações", path: "/estoque/configuracoes", icon: Settings },
     ],
   },
+
+  // Vendas & PDV
   {
     icon: FileText, label: "Orçamentos", path: "/orcamentos", roles: ["ADMIN", "GERENTE", "VENDEDOR"],
     children: [
@@ -163,16 +168,24 @@ const navItems: NavItem[] = [
       { label: "Criativos", path: "/atendimento-express?tab=criativos", icon: Sparkles },
     ],
   },
+
+  // Serviços & O.S.
   {
-    icon: ClipboardCheck, label: "Cadastros", path: "/cadastros", roles: ["ADMIN", "GERENTE", "VENDEDOR"],
+    icon: Wrench, label: "Ordens de serviços", path: "/os", roles: ["ADMIN", "GERENTE", "MECÂNICO"],
     children: [
-      { label: "Clientes", path: "/clientes", icon: Users },
-      { label: "Fornecedores", path: "/fornecedores", icon: Truck },
-      { label: "Funcionários", path: "/cadastros/funcionarios", icon: UserCheck },
-      { label: "Transportadoras", path: "/cadastros/transportadoras", icon: Truck },
-      { label: "Categorias", path: "/cadastros/categorias", icon: Layers },
+      { label: "Gerenciar O.S.", path: "/os", icon: ClipboardList },
+      { label: "Situações", path: "/os/situacoes", icon: Settings },
     ],
   },
+  {
+    icon: Wrench, label: "Serviços / Mão de obra", path: "/servicos", roles: ["ADMIN", "GERENTE", "MECÂNICO"],
+    children: [
+      { label: "Tabela de Preços", path: "/servicos", icon: ClipboardList },
+      { label: "Custo de Homem/Hora", path: "/servicos/custo-homem-hora", icon: Clock },
+    ],
+  },
+
+  // Financeiro & Fiscal
   {
     icon: DollarSign, label: "Financeiro", path: "/financeiro", roles: ["ADMIN", "GERENTE"],
     children: [
@@ -186,7 +199,6 @@ const navItems: NavItem[] = [
       { label: "Situações", path: "/financeiro/situacoes", icon: ClipboardList },
       { label: "Conciliação bancária", path: "/financeiro/conciliacao", icon: ArrowLeftRight },
       { label: "Transferências", path: "/financeiro/transferencias", icon: ArrowLeftRight },
-      
       { label: "Comissões", path: "/financeiro/comissoes", icon: Grid3X3 },
       { label: "Plano de contas", path: "/financeiro/plano-contas", icon: FileText },
     ],
@@ -201,6 +213,8 @@ const navItems: NavItem[] = [
       { label: "Calculadoras de Impostos", path: "/fiscal/calculadoras", icon: Calculator },
     ],
   },
+
+  // Relatórios
   {
     icon: FileText, label: "Relatórios", path: "/relatorios", roles: ["ADMIN", "GERENTE"],
     children: [
@@ -214,6 +228,8 @@ const navItems: NavItem[] = [
       { label: "Fidelidade", path: "/fidelidade", icon: Heart },
     ],
   },
+
+  // Restante
   {
     icon: Store, label: "E-commerce", path: "/ecommerce", roles: ["ADMIN", "GERENTE", "VENDEDOR", "CLIENTE"], planos: ["platina"],
     children: [
@@ -236,7 +252,6 @@ const navItems: NavItem[] = [
       { label: "Shein", path: "/marketplaces/shein", icon: ShoppingBag },
     ],
   },
-  
   {
     icon: ClipboardCheck, label: "Gestão Operacional", path: "/gestao-operacional", roles: ["ADMIN", "GERENTE"],
     children: [
@@ -276,10 +291,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     const getSectionForItem = (item: NavItem): string => {
       const p = item.path;
       if (p === "/") return "Geral";
-      if (p.startsWith("/os") || p.startsWith("/servicos")) return "Serviços & O.S.";
+      if (p.startsWith("/cadastros") || p.startsWith("/clientes") || p.startsWith("/fornecedores")) return "Cadastros";
+      if (p.startsWith("/os/agenda")) return "Agenda";
       if (p.startsWith("/produtos") || p.startsWith("/estoque") || p.startsWith("/estoque-hub")) return "Estoque & Catálogo";
       if (p.startsWith("/orcamentos") || p.startsWith("/pdv") || p.startsWith("/vendas-balcao") || p.startsWith("/atendimento-express")) return "Vendas & PDV";
-      if (p.startsWith("/clientes") || p.startsWith("/fornecedores") || p.startsWith("/cadastros")) return "Cadastros";
+      if (p.startsWith("/os") || p.startsWith("/servicos")) return "Serviços & O.S.";
       if (p.startsWith("/financeiro") || p.startsWith("/fiscal") || p.startsWith("/relatorios")) return "Financeiro & Fiscal";
       if (p.startsWith("/ecommerce") || p.startsWith("/marketplaces")) return "Integrações & Canais";
       if (p.startsWith("/gestao-operacional") || p.startsWith("/filiais")) return "Administração & Filiais";

@@ -198,10 +198,139 @@ export default function DetalhesOrdemServico() {
   const [editOutros, setEditOutros] = useState("");
   const [editObs, setEditObs] = useState("");
   const [editObsInternas, setEditObsInternas] = useState("");
-
+  const [editImprimirChecklistA4, setEditImprimirChecklistA4] = useState(true);
   const [editFotosCheckin, setEditFotosCheckin] = useState<(File | string | null)[]>(Array(8).fill(null));
   const editFotosInputRef = useRef<HTMLInputElement>(null);
-  const activeEditFotosSlotIndex = useRef<number | null>(null);
+  const editFotosCameraVideoRef = useRef<HTMLVideoElement>(null);
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [tempPhoto, setTempPhoto] = useState<File | string | null>(null);
+  const [photoModalCameraActive, setPhotoModalCameraActive] = useState(false);
+  const [photoModalStream, setPhotoModalStream] = useState<MediaStream | null>(null);
+  const [editImprimirFotosCheckin, setEditImprimirFotosCheckin] = useState(true);
+
+  const FOTOS_LABELS = ["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"];
+
+  useEffect(() => {
+    if (photoModalOpen) {
+      startPhotoModalCamera();
+    } else {
+      stopPhotoModalCamera();
+    }
+  }, [photoModalOpen]);
+
+  useEffect(() => {
+    if (photoModalCameraActive && photoModalStream && editFotosCameraVideoRef.current) {
+      editFotosCameraVideoRef.current.srcObject = photoModalStream;
+    }
+  }, [photoModalCameraActive, photoModalStream, editFotosCameraVideoRef.current]);
+
+  const triggerUpload = (index: number) => {
+    setSelectedSlot(index);
+    setTempPhoto(editFotosCheckin[index]);
+    setPhotoModalOpen(true);
+  };
+
+  const startPhotoModalCamera = async () => {
+    try {
+      if (photoModalStream) {
+        stopPhotoModalCamera();
+      }
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
+      });
+      setPhotoModalStream(mediaStream);
+      setPhotoModalCameraActive(true);
+      if (editFotosCameraVideoRef.current) {
+        editFotosCameraVideoRef.current.srcObject = mediaStream;
+      }
+    } catch (err) {
+      console.error("Erro ao acessar câmera traseira:", err);
+      try {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: true
+        });
+        setPhotoModalStream(mediaStream);
+        setPhotoModalCameraActive(true);
+        if (editFotosCameraVideoRef.current) {
+          editFotosCameraVideoRef.current.srcObject = mediaStream;
+        }
+      } catch (err2) {
+        console.error("Erro geral de câmera:", err2);
+        toast.error("Não foi possível acessar a câmera do dispositivo.");
+      }
+    }
+  };
+
+  const stopPhotoModalCamera = () => {
+    if (photoModalStream) {
+      photoModalStream.getTracks().forEach(track => track.stop());
+      setPhotoModalStream(null);
+    }
+    setPhotoModalCameraActive(false);
+  };
+
+  const capturePhotoModalPhoto = () => {
+    if (editFotosCameraVideoRef.current) {
+      const video = editFotosCameraVideoRef.current;
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], `checkin_${FOTOS_LABELS[selectedSlot ?? 0].toLowerCase().replace(/\s+/g, "_")}_${Date.now()}.jpg`, { type: "image/jpeg" });
+            setTempPhoto(file);
+            stopPhotoModalCamera();
+          }
+        }, "image/jpeg", 0.85);
+      }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    setTempPhoto(file);
+    stopPhotoModalCamera();
+    if (editFotosInputRef.current) editFotosInputRef.current.value = "";
+  };
+
+  const clearPhotoModalPhoto = () => {
+    setTempPhoto(null);
+    stopPhotoModalCamera();
+  };
+
+  const downloadPhotoModalPhoto = () => {
+    if (!tempPhoto) return;
+    const isUrl = typeof tempPhoto === "string";
+    const src = isUrl ? (tempPhoto as string) : URL.createObjectURL(tempPhoto as File);
+    const a = document.createElement("a");
+    a.href = src;
+    a.download = `foto_${FOTOS_LABELS[selectedSlot ?? 0].toLowerCase().replace(/\s+/g, "_")}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleConclude = () => {
+    if (selectedSlot !== null) {
+      setEditFotosCheckin((prev) => {
+        const copy = [...prev];
+        copy[selectedSlot] = tempPhoto;
+        return copy;
+      });
+    }
+    stopPhotoModalCamera();
+    setPhotoModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    stopPhotoModalCamera();
+    setPhotoModalOpen(false);
+  };
 
   // Edit mode: inline products/services
   const [editProdutos, setEditProdutos] = useState<EditProdutoItem[]>([]);
@@ -352,6 +481,7 @@ export default function DetalhesOrdemServico() {
       if (!osData) { toast.error("OS não encontrada"); navigate("/os"); return; }
       const osTyped = osData as unknown as OSData;
       setOs(osTyped);
+      setEditImprimirFotosCheckin((osData as any).imprimir_fotos_checkin !== false);
 
       // Carregar fotos nos slots com base no rótulo
       const fotosCarregadas = (osData as any).fotos_checkin || [];
@@ -378,6 +508,7 @@ export default function DetalhesOrdemServico() {
     if (!os) return;
     setEditStatus(os.status);
     setEditPrioridade(os.prioridade || "normal");
+    setEditImprimirFotosCheckin((os as any).imprimir_fotos_checkin !== false);
     const de = os.data_entrada ? new Date(os.data_entrada) : new Date();
     setEditDataEntrada(de.toISOString().split("T")[0]);
     setEditHoraEntrada(de.toTimeString().slice(0, 5));
@@ -444,6 +575,7 @@ export default function DetalhesOrdemServico() {
     setEditFotosCheckin(novasFotos);
 
     setEditObsCheckin((os as any).observacoes_checkin || "");
+    setEditImprimirChecklistA4(localStorage.getItem(`imprimir_checklist_a4_${os.id}`) !== 'false');
     setEditCliente(os.cliente_nome ? { nome_completo: os.cliente_nome, telefone: os.cliente_telefone } : null);
 
     // Build edit products/services from existing items
@@ -585,6 +717,17 @@ export default function DetalhesOrdemServico() {
   // SAVE EDIT
   const salvarEdicao = async () => {
     if (!os) return;
+
+    // Validar parcelas
+    if (editPagamento.gerar_condicoes) {
+      const somaParcelas = editPagamento.parcelas.reduce((s, p) => s + (p.valor || 0), 0);
+      const diferenca = Math.abs(somaParcelas - editTotalGeral);
+      if (editPagamento.parcelas.length === 0 || diferenca > 0.01) {
+        toast.error(`A soma das parcelas (R$ ${somaParcelas.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}) difere do valor total da OS (R$ ${editTotalGeral.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}). Ajuste os valores para salvar.`);
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       const frete = Number(editFrete) || 0;
@@ -627,6 +770,7 @@ export default function DetalhesOrdemServico() {
         observacoes_internas: editObsInternas || null,
         checklist_revisao: editChecklist ? JSON.stringify(editChecklist) : null,
         observacoes_checkin: editObsCheckin || null,
+        imprimir_fotos_checkin: editImprimirFotosCheckin,
         condicoes_pagamento: editPagamento.gerar_condicoes ? editPagamento.parcelas : null,
       } as any).eq("id", os.id);
 
@@ -664,6 +808,8 @@ export default function DetalhesOrdemServico() {
       }
 
       if (error) throw error;
+
+      localStorage.setItem(`imprimir_checklist_a4_${os.id}`, String(editImprimirChecklistA4));
 
       // Delete all existing items and re-insert
       const { error: deleteError } = await supabase.from("os_itens").delete().eq("os_id", os.id);
@@ -1444,24 +1590,22 @@ export default function DetalhesOrdemServico() {
                     <Badge variant="secondary">{editFotosCheckin.filter(Boolean).length}/8</Badge>
                   </div>
                   
+                  <label className="flex items-center gap-2 cursor-pointer bg-secondary/20 hover:bg-secondary/35 border border-border/80 px-2.5 py-1.5 rounded text-xs transition-colors select-none mb-2 w-full">
+                    <input
+                      type="checkbox"
+                      checked={editImprimirFotosCheckin}
+                      onChange={(e) => setEditImprimirFotosCheckin(e.target.checked)}
+                      className="w-3.5 h-3.5 rounded text-primary focus:ring-primary"
+                    />
+                    <span className="font-semibold text-foreground">Imprimir fotos na OS</span>
+                  </label>
+
                   <input
                     ref={editFotosInputRef}
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={(e) => {
-                      if (!e.target.files || e.target.files.length === 0) return;
-                      const file = e.target.files[0];
-                      const index = activeEditFotosSlotIndex.current;
-                      if (index !== null) {
-                        setEditFotosCheckin((prev) => {
-                          const copy = [...prev];
-                          copy[index] = file;
-                          return copy;
-                        });
-                      }
-                      if (editFotosInputRef.current) editFotosInputRef.current.value = "";
-                    }}
+                    onChange={handleFileChange}
                   />
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1478,10 +1622,11 @@ export default function DetalhesOrdemServico() {
                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
                                 <button
                                   type="button"
-                                  onClick={() => window.open(imgSrc, "_blank")}
+                                  onClick={() => triggerUpload(idx)}
                                   className="p-1 rounded-full bg-white/20 text-white hover:bg-white/40"
+                                  title="Alterar Foto"
                                 >
-                                  <Eye className="h-3.5 w-3.5" />
+                                  <Camera className="h-3.5 w-3.5" />
                                 </button>
                                 <button
                                   type="button"
@@ -1504,10 +1649,7 @@ export default function DetalhesOrdemServico() {
                           ) : (
                             <button
                               type="button"
-                              onClick={() => {
-                                activeEditFotosSlotIndex.current = idx;
-                                editFotosInputRef.current?.click();
-                              }}
+                              onClick={() => triggerUpload(idx)}
                               className="w-full h-full flex flex-col items-center justify-center gap-1 p-1 hover:bg-secondary/40 transition-colors"
                             >
                               <Camera className="h-4.5 w-4.5 text-muted-foreground" />
@@ -1591,6 +1733,15 @@ export default function DetalhesOrdemServico() {
                   <span className="text-destructive font-medium">
                     ⚠ Substituir: {editChecklist.reduce((s, c) => s + c.itens.filter(i => i.estado === "substituir").length, 0)}
                   </span>
+                  <label className="flex items-center gap-2 cursor-pointer ml-4 border-l pl-4 border-border">
+                    <input
+                      type="checkbox"
+                      checked={editImprimirChecklistA4}
+                      onChange={(e) => setEditImprimirChecklistA4(e.target.checked)}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <span className="text-sm font-medium">Imprimir Check list na A4</span>
+                  </label>
                 </div>
                 <Button
                   type="button"
@@ -1603,12 +1754,119 @@ export default function DetalhesOrdemServico() {
                     placa: editPlaca,
                     clienteNome: editCliente?.nome_completo,
                     numeroOS: os?.numero_os,
+                    fotos: editFotosCheckin,
+                    imprimirFotos: editImprimirFotosCheckin,
                   })}
                 >
                   <Printer className="h-4 w-4" /> Imprimir
                 </Button>
               </div>
             )}
+
+            <Dialog open={photoModalOpen} onOpenChange={(open) => { if (!open) handleCancel(); }}>
+              <DialogContent className="max-w-4xl w-[95vw] max-h-[92vh] rounded-xl p-0 overflow-y-auto border border-border bg-background">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                  <h3 className="text-lg font-bold text-foreground">Alterar Foto</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 p-4 md:p-6">
+                  {/* Left Column: Preview / Webcam */}
+                  <div className="md:col-span-3 aspect-video bg-black rounded-lg border border-border flex items-center justify-center overflow-hidden relative min-h-[200px] md:min-h-[350px]">
+                    {photoModalCameraActive ? (
+                      <video
+                        ref={editFotosCameraVideoRef}
+                        autoPlay
+                        playsInline
+                        className="w-full h-full object-cover"
+                      />
+                    ) : tempPhoto ? (
+                      <img
+                        src={typeof tempPhoto === "string" ? tempPhoto : URL.createObjectURL(tempPhoto)}
+                        alt="Preview"
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="text-center text-muted-foreground space-y-2 p-4">
+                        <Camera className="h-12 w-12 mx-auto stroke-[1.5] text-muted-foreground/60" />
+                        <p className="text-sm font-medium">Nenhuma imagem carregada</p>
+                        <p className="text-xs text-muted-foreground/85">Inicie a webcam ou envie um arquivo</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column: Actions */}
+                  <div className="md:col-span-1 flex flex-col justify-start gap-2.5 md:gap-3">
+                    {photoModalCameraActive ? (
+                      <Button
+                        type="button"
+                        className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={capturePhotoModalPhoto}
+                      >
+                        <Camera className="h-4 w-4" /> Capturar Foto
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground"
+                        onClick={startPhotoModalCamera}
+                      >
+                        <Camera className="h-4 w-4" /> Tirar Foto Com WebCam
+                      </Button>
+                    )}
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground"
+                      onClick={() => editFotosInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4" /> Enviar Foto do Computador
+                    </Button>
+
+                    <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground"
+                        onClick={clearPhotoModalPhoto}
+                        disabled={!tempPhoto && !photoModalCameraActive}
+                      >
+                        <X className="h-4 w-4" /> Limpar Foto
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground"
+                        onClick={downloadPhotoModalPhoto}
+                        disabled={!tempPhoto}
+                      >
+                        <Upload className="h-4 w-4 rotate-180" /> Baixar Foto
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-start gap-3 px-6 py-4 bg-muted/40 border-t border-border">
+                  <Button
+                    type="button"
+                    className="px-6 h-10 font-bold bg-cyan-500 hover:bg-cyan-600 text-white rounded-md text-sm"
+                    onClick={handleConclude}
+                  >
+                    Concluir
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="px-6 h-10 font-bold border-border bg-background hover:bg-secondary/20 text-foreground rounded-md text-sm"
+                    onClick={handleCancel}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
           </CollapsibleContent>
         </Card>
@@ -1637,10 +1895,18 @@ export default function DetalhesOrdemServico() {
           <Button type="button" variant="outline" onClick={() => setEditingPayment(false)} className="border-destructive text-destructive hover:bg-destructive/10">
             <X size={16} className="mr-2" /> Cancelar
           </Button>
-          <Button onClick={salvarEdicao} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white">
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? "Salvando..." : "Salvar OS"}
-          </Button>
+          {(() => {
+            const diferenca = editPagamento.gerar_condicoes
+              ? Math.abs(editPagamento.parcelas.reduce((s, p) => s + (p.valor || 0), 0) - editTotalGeral)
+              : 0;
+            const hasDiferenca = editPagamento.gerar_condicoes && (editPagamento.parcelas.length === 0 || diferenca > 0.01);
+            return (
+              <Button onClick={salvarEdicao} disabled={saving || hasDiferenca} className={hasDiferenca ? "bg-muted text-muted-foreground" : "bg-green-600 hover:bg-green-700 text-white"}>
+                <Save className="h-4 w-4 mr-2" />
+                {saving ? "Salvando..." : hasDiferenca ? "Acerte o Pagamento" : "Salvar OS"}
+              </Button>
+            );
+          })()}
         </div>
       </div>
     );

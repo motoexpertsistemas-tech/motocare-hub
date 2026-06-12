@@ -38,6 +38,7 @@ interface OSPrintData {
   valor_total: number | null;
   created_at: string;
   condicoes_pagamento: any[] | null;
+  imprimir_fotos_checkin?: boolean | null;
 }
 
 const statusLabels: Record<string, string> = {
@@ -61,7 +62,7 @@ function fmtDate(d: string | null | undefined) {
   return new Date(d).toLocaleDateString("pt-BR");
 }
 
-export async function printOS(osId: string) {
+export async function printOS(osId: string, imprimirChecklist: boolean = true) {
   // Fetch OS data
   const { data: osData } = await supabase.from("ordem_servico").select("*").eq("id", osId).maybeSingle();
   if (!osData) return;
@@ -312,6 +313,7 @@ ${(() => {
 
 <!-- CHECK DO VEÍCULO -->
 ${(() => {
+  if (imprimirChecklist === false) return "";
   try {
     const clRaw = (os as any).checklist_revisao;
     const obsCheckin = (os as any).observacoes_checkin;
@@ -348,7 +350,8 @@ ${(() => {
       html += `</tbody></table>`;
     }
     const fotos = (os as any).fotos_checkin || [];
-    if (Array.isArray(fotos) && fotos.length > 0) {
+    const imprimirFotos = os.imprimir_fotos_checkin !== false;
+    if (imprimirFotos && Array.isArray(fotos) && fotos.length > 0) {
       html += `<div style="margin-top:10px; border-top:1px dashed #e5e7eb; padding-top:10px">
         <div style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;margin-bottom:6px">Fotos do Check-in</div>
         <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px">`;
@@ -394,3 +397,159 @@ ${(() => {
   w.document.close();
   setTimeout(() => w.print(), 300);
 }
+
+export async function printOSCupom(osId: string) {
+  // Fetch OS data
+  const { data: osData } = await supabase.from("ordem_servico").select("*").eq("id", osId).maybeSingle();
+  if (!osData) return;
+  const os = osData as any;
+
+  // Fetch items
+  const { data: itensData } = await supabase.from("os_itens").select("*").eq("os_id", osId).order("created_at");
+  const itens = (itensData || []) as any[];
+
+  // Fetch company info
+  const { data: loja } = await supabase.from("configuracoes_loja").select("*").limit(1).maybeSingle();
+
+  const pecas = itens.filter((i: any) => i.tipo === "peca" || i.tipo === "produto");
+  const servicos = itens.filter((i: any) => i.tipo === "servico");
+
+  const w = window.open("", "_blank", "width=800,height=600");
+  if (!w) return;
+
+  const fmtDate = (d: string | null | undefined) => {
+    if (!d) return "—";
+    return new Date(d).toLocaleDateString("pt-BR") + " " + new Date(d).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const formatBRL = (v: number | null | undefined) => {
+    return (v ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const pecasRows = pecas.map((p, idx) => `
+    <tr>
+      <td class="desc-col">${p.descricao}</td>
+      <td class="right">${p.quantidade}</td>
+      <td class="right">${formatBRL(p.valor_unitario)}</td>
+      <td class="right bold">${formatBRL(p.subtotal)}</td>
+    </tr>
+  `).join("");
+
+  const servicosRows = servicos.map((s, idx) => `
+    <tr>
+      <td class="desc-col">${s.descricao}</td>
+      <td class="right">${s.quantidade}</td>
+      <td class="right">${formatBRL(s.valor_unitario)}</td>
+      <td class="right bold">${formatBRL(s.subtotal)}</td>
+    </tr>
+  `).join("");
+
+  const parcelas = os.condicoes_pagamento || [];
+  let pagamentoHtml = "";
+  if (Array.isArray(parcelas) && parcelas.length > 0) {
+    pagamentoHtml = parcelas.map((p: any, idx: number) => `
+      <div class="payment-row">
+        <span>${idx + 1}ª Parc - ${p.forma_pagamento || "—"} (${p.vencimento ? new Date(p.vencimento + "T12:00:00").toLocaleDateString("pt-BR") : "—"})</span>
+        <span class="bold">R$ ${formatBRL(p.valor)}</span>
+      </div>
+    `).join("");
+  } else {
+    pagamentoHtml = `
+      <div class="payment-row">
+        <span>À Vista</span>
+        <span class="bold">R$ ${formatBRL(os.valor_total)}</span>
+      </div>
+    `;
+  }
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>OS ${os.numero_os} - Cupom</title>
+<style>
+  @page { margin: 0; size: 80mm auto; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Courier New', Consolas, monospace; font-size: 11px; width: 72mm; margin: 4mm auto; color: #000; line-height: 1.4; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .header { text-align: center; padding-bottom: 6px; }
+  .header h2 { margin: 0; font-size: 14px; font-weight: bold; text-transform: uppercase; }
+  .header p { margin: 2px 0; font-size: 9px; color: #000; }
+  .divider { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+  .divider-double { border: none; border-top: 2px solid #000; margin: 6px 0; }
+  .section-title { text-align: center; font-weight: bold; font-size: 11px; margin: 6px 0 4px; letter-spacing: 0.5px; background: #eee; padding: 3px 0; border-top: 1px solid #000; border-bottom: 1px solid #000; }
+  table { width: 100%; border-collapse: collapse; font-size: 9px; }
+  th { text-align: left; font-weight: bold; border-bottom: 1px solid #000; padding: 3px 1px; text-transform: uppercase; font-size: 8px; }
+  td { padding: 3px 1px; border-bottom: 1px dotted #ccc; vertical-align: top; }
+  .desc-col { max-width: 110px; word-wrap: break-word; overflow-wrap: break-word; }
+  .right { text-align: right; }
+  .bold { font-weight: bold; }
+  .total-box { background: #000; color: #fff; padding: 6px 8px; margin: 6px 0; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; }
+  .payment-row { display: flex; justify-content: space-between; font-size: 10px; padding: 3px 0; border-bottom: 1px dotted #ccc; }
+  .info-row { display: flex; justify-content: space-between; font-size: 10px; padding: 2px 0; }
+  .footer { text-align: center; font-size: 9px; color: #000; margin-top: 10px; }
+  .footer p { margin: 2px 0; }
+</style></head><body>
+
+  <div class="header">
+    <h2>${loja?.nome_fantasia || "Oficina"}</h2>
+    ${loja?.cnpj ? `<p>CNPJ: ${loja.cnpj}</p>` : ""}
+    ${loja?.telefone ? `<p>Tel: ${loja.telefone}</p>` : ""}
+    ${loja?.logradouro ? `<p>${loja.logradouro}${loja.numero ? `, ${loja.numero}` : ""}</p>` : ""}
+  </div>
+
+  <hr class="divider-double">
+
+  <div class="section-title">ORDEM DE SERVIÇO ${os.numero_os}</div>
+
+  <hr class="divider">
+
+  ${pecas.length > 0 ? `
+    <div class="section-title">PEÇAS / PRODUTOS</div>
+    <table>
+      <thead><tr><th>DESCRIÇÃO</th><th class="right">QTD</th><th class="right">UNIT</th><th class="right">TOTAL</th></tr></thead>
+      <tbody>
+        ${pecasRows}
+      </tbody>
+    </table>
+    <div class="info-row" style="margin-top:4px"><span>Total Peças:</span><span>R$ ${formatBRL(os.valor_total_pecas)}</span></div>
+    <hr class="divider">
+  ` : ""}
+
+  ${servicos.length > 0 ? `
+    <div class="section-title">SERVIÇOS / MÃO DE OBRA</div>
+    <table>
+      <thead><tr><th>DESCRIÇÃO</th><th class="right">QTD</th><th class="right">UNIT</th><th class="right">TOTAL</th></tr></thead>
+      <tbody>
+        ${servicosRows}
+      </tbody>
+    </table>
+    <div class="info-row" style="margin-top:4px"><span>Total Serviços:</span><span>R$ ${formatBRL(os.valor_total_servicos)}</span></div>
+    <hr class="divider">
+  ` : ""}
+
+  ${(os.valor_frete > 0 || os.valor_outros > 0 || os.valor_desconto > 0) ? `
+    <div class="info-row"><span>Frete:</span><span>R$ ${formatBRL(os.valor_frete)}</span></div>
+    <div class="info-row"><span>Outros:</span><span>R$ ${formatBRL(os.valor_outros)}</span></div>
+    <div class="info-row"><span>Desconto:</span><span class="text-destructive">- R$ ${formatBRL(os.valor_desconto)}</span></div>
+    <hr class="divider">
+  ` : ""}
+
+  <div class="total-box">
+    <span>TOTAL GERAL</span>
+    <span>R$ ${formatBRL(os.valor_total)}</span>
+  </div>
+
+  <div class="section-title">FORMA DE PAGAMENTO</div>
+  ${pagamentoHtml}
+
+  <hr class="divider">
+
+  <div class="footer">
+    <p>*** Este cupom não é documento fiscal ***</p>
+    <p style="margin-top: 8px; font-weight: bold;">Obrigado pela preferência!</p>
+  </div>
+
+</body></html>`;
+
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 300);
+}
+

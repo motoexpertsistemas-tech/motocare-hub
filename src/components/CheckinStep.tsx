@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Camera, Upload, X, ArrowLeft, ArrowRight, CheckCircle2, AlertTriangle, Wrench, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { toast } from "@/hooks/use-toast";
 
 export type ChecklistItemState = "bom" | "substituir" | "";
 
@@ -22,6 +23,8 @@ export interface CheckinData {
   fotos: (File | string | null)[];
   checklist: ChecklistCategory[];
   observacoes_checkin: string;
+  imprimir_fotos_checkin: boolean;
+  imprimir_checklist_a4?: boolean;
 }
 
 export const CHECKLIST_INICIAL: ChecklistCategory[] = [
@@ -119,33 +122,143 @@ interface CheckinStepProps {
 }
 
 export function CheckinStep({ onContinue, onBack, clienteNome, placa }: CheckinStepProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const FOTOS_LABELS = ["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"];
   const [fotos, setFotos] = useState<(File | string | null)[]>(Array(8).fill(null));
-  const activeSlotIndex = useRef<number | null>(null);
+  
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [tempPhoto, setTempPhoto] = useState<File | string | null>(null);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
   const [checklist, setChecklist] = useState<ChecklistCategory[]>(
     JSON.parse(JSON.stringify(CHECKLIST_INICIAL))
   );
   const [observacoes, setObservacoes] = useState("");
+  const [imprimirFotos, setImprimirFotos] = useState(true);
+  const [imprimirChecklistA4, setImprimirChecklistA4] = useState(true);
+
+  useEffect(() => {
+    if (cameraActive && stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [cameraActive, stream, videoRef.current]);
 
   const triggerUpload = (index: number) => {
-    activeSlotIndex.current = index;
-    inputRef.current?.click();
+    setSelectedSlot(index);
+    const foto = fotos[index];
+    setTempPhoto(foto);
+    setPhotoModalOpen(true);
+    if (!foto) {
+      startCamera();
+    }
+  };
+
+  const startCamera = async () => {
+    try {
+      if (stream) {
+        stopCamera();
+      }
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
+      });
+      setStream(mediaStream);
+      setCameraActive(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+    } catch (err) {
+      console.error("Erro ao acessar câmera traseira:", err);
+      try {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: true
+        });
+        setStream(mediaStream);
+        setCameraActive(true);
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
+      } catch (err2) {
+        console.error("Erro geral de câmera:", err2);
+        toast({
+          title: "Erro ao acessar câmera",
+          description: "Não foi possível acessar a câmera do dispositivo.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setCameraActive(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const video = videoRef.current;
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], `checkin_${FOTOS_LABELS[selectedSlot ?? 0].toLowerCase().replace(/\s+/g, "_")}_${Date.now()}.jpg`, { type: "image/jpeg" });
+            setTempPhoto(file);
+            stopCamera();
+          }
+        }, "image/jpeg", 0.85);
+      }
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
-    const index = activeSlotIndex.current;
-    if (index !== null) {
+    setTempPhoto(file);
+    stopCamera();
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const clearPhoto = () => {
+    setTempPhoto(null);
+    startCamera(); // Activate camera again when photo is cleared
+  };
+
+  const downloadPhoto = () => {
+    if (!tempPhoto) return;
+    const isUrl = typeof tempPhoto === "string";
+    const src = isUrl ? (tempPhoto as string) : URL.createObjectURL(tempPhoto as File);
+    const a = document.createElement("a");
+    a.href = src;
+    a.download = `foto_${FOTOS_LABELS[selectedSlot ?? 0].toLowerCase().replace(/\s+/g, "_")}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleConclude = () => {
+    if (selectedSlot !== null) {
       setFotos((prev) => {
         const copy = [...prev];
-        copy[index] = file;
+        copy[selectedSlot] = tempPhoto;
         return copy;
       });
     }
-    if (inputRef.current) inputRef.current.value = "";
+    stopCamera();
+    setPhotoModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    stopCamera();
+    setPhotoModalOpen(false);
   };
 
   const toggleItem = (catIdx: number, itemIdx: number) => {
@@ -201,7 +314,7 @@ export function CheckinStep({ onContinue, onBack, clienteNome, placa }: CheckinS
             </CardHeader>
             <CardContent className="space-y-3">
               <input
-                ref={inputRef}
+                ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 className="hidden"
@@ -222,10 +335,11 @@ export function CheckinStep({ onContinue, onBack, clienteNome, placa }: CheckinS
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                             <button
                               type="button"
-                              onClick={() => window.open(imgSrc, "_blank")}
+                              onClick={() => triggerUpload(idx)}
                               className="p-1.5 rounded-full bg-white/20 text-white hover:bg-white/40"
+                              title="Alterar Foto"
                             >
-                              <Eye className="h-3.5 w-3.5" />
+                              <Camera className="h-3.5 w-3.5" />
                             </button>
                             <button
                               type="button"
@@ -329,6 +443,15 @@ export function CheckinStep({ onContinue, onBack, clienteNome, placa }: CheckinS
             <div className="flex items-center gap-4 text-sm px-1">
               <span className="text-emerald-600 font-medium">✓ Bom: {totalBom}</span>
               <span className="text-destructive font-medium">⚠ Substituir: {totalSubstituir}</span>
+              <label className="flex items-center gap-2 cursor-pointer ml-4 border-l pl-4 border-border">
+                <input
+                  type="checkbox"
+                  checked={imprimirChecklistA4}
+                  onChange={(e) => setImprimirChecklistA4(e.target.checked)}
+                  className="w-4 h-4 text-primary"
+                />
+                <span className="text-sm font-medium">Imprimir Check list na A4</span>
+              </label>
             </div>
           </div>
         </div>
@@ -411,7 +534,7 @@ export function CheckinStep({ onContinue, onBack, clienteNome, placa }: CheckinS
             </Dialog>
 
             <Button
-              onClick={() => onContinue({ fotos, checklist, observacoes_checkin: observacoes })}
+              onClick={() => onContinue({ fotos, checklist, observacoes_checkin: observacoes, imprimir_fotos_checkin: imprimirFotos, imprimir_checklist_a4: imprimirChecklistA4 })}
               className="gap-2"
             >
               Continuar <ArrowRight className="h-4 w-4" />
@@ -419,6 +542,120 @@ export function CheckinStep({ onContinue, onBack, clienteNome, placa }: CheckinS
           </div>
         </div>
       </div>
+
+      <Dialog open={photoModalOpen} onOpenChange={(open) => { if (!open) handleCancel(); }}>
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[92vh] rounded-xl p-0 overflow-y-auto border border-border bg-background">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <h3 className="text-lg font-bold text-foreground">Alterar Foto</h3>
+            <label className="flex items-center gap-2 cursor-pointer bg-secondary/30 hover:bg-secondary/50 border border-border px-3 py-1.5 rounded-md text-xs transition-colors select-none">
+              <input
+                type="checkbox"
+                checked={imprimirFotos}
+                onChange={(e) => setImprimirFotos(e.target.checked)}
+                className="w-4 h-4 rounded text-primary focus:ring-primary"
+              />
+              <span className="font-semibold text-foreground">Imprimir fotos na OS</span>
+            </label>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 p-4 md:p-6">
+            {/* Left Column: Preview / Webcam */}
+            <div className="md:col-span-3 aspect-video bg-black rounded-lg border border-border flex items-center justify-center overflow-hidden relative min-h-[200px] md:min-h-[350px]">
+              {cameraActive ? (
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              ) : tempPhoto ? (
+                <img
+                  src={typeof tempPhoto === "string" ? tempPhoto : URL.createObjectURL(tempPhoto)}
+                  alt="Preview"
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="text-center text-muted-foreground space-y-2 p-4">
+                  <Camera className="h-12 w-12 mx-auto stroke-[1.5] text-muted-foreground/60" />
+                  <p className="text-sm font-medium">Nenhuma imagem carregada</p>
+                  <p className="text-xs text-muted-foreground/85">Inicie a webcam ou envie um arquivo</p>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column: Actions */}
+            <div className="md:col-span-1 flex flex-col justify-start gap-2.5 md:gap-3">
+              {cameraActive ? (
+                <Button
+                  type="button"
+                  className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={capturePhoto}
+                >
+                  <Camera className="h-4 w-4" /> Capturar Foto
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground"
+                  onClick={startCamera}
+                >
+                  <Camera className="h-4 w-4" /> Tirar Foto Com WebCam
+                </Button>
+              )}
+              
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4" /> Enviar Foto do Computador
+              </Button>
+
+              <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground"
+                  onClick={clearPhoto}
+                  disabled={!tempPhoto && !cameraActive}
+                >
+                  <X className="h-4 w-4" /> Limpar Foto
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground"
+                  onClick={downloadPhoto}
+                  disabled={!tempPhoto}
+                >
+                  <Upload className="h-4 w-4 rotate-180" /> Baixar Foto
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-start gap-3 px-6 py-4 bg-muted/40 border-t border-border">
+            <Button
+              type="button"
+              className="px-6 h-10 font-bold bg-cyan-500 hover:bg-cyan-600 text-white rounded-md text-sm"
+              onClick={handleConclude}
+            >
+              Concluir
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="px-6 h-10 font-bold border-border bg-background hover:bg-secondary/20 text-foreground rounded-md"
+              onClick={handleCancel}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

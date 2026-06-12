@@ -248,6 +248,7 @@ export default function NovaOrdemServico() {
 
   // Anexos (8 slots de fotos estruturadas de check-in)
   const [fotosCheckin, setFotosCheckin] = useState<(File | string | null)[]>(Array(8).fill(null));
+  const [imprimirFotosCheckin, setImprimirFotosCheckin] = useState(true);
 
   // Observações
   const [observacoes, setObservacoes] = useState("");
@@ -555,6 +556,20 @@ export default function NovaOrdemServico() {
       return;
     }
 
+    // Validar parcelas
+    if (pagamento.gerar_condicoes) {
+      const somaParcelas = pagamento.parcelas.reduce((s, p) => s + (p.valor || 0), 0);
+      const diferenca = Math.abs(somaParcelas - totais.total);
+      if (pagamento.parcelas.length === 0 || diferenca > 0.01) {
+        toast({
+          title: "Erro nas parcelas",
+          description: `A soma das parcelas (R$ ${somaParcelas.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}) difere do valor total da OS (R$ ${totais.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}). Ajuste os valores para salvar.`,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       const { data: novaOS, error } = await supabase
@@ -595,6 +610,7 @@ export default function NovaOrdemServico() {
           checklist_revisao: checkinData?.checklist ? JSON.stringify(checkinData.checklist) : null,
           observacoes_checkin: checkinData?.observacoes_checkin || null,
           empresa_id: empresaId,
+          imprimir_fotos_checkin: checkinData?.imprimir_fotos_checkin ?? true,
           condicoes_pagamento: pagamento.gerar_condicoes ? pagamento.parcelas : [],
         } as any)
         .select()
@@ -602,10 +618,12 @@ export default function NovaOrdemServico() {
 
       if (error) throw error;
 
+      const osId = (novaOS as any).id;
+      localStorage.setItem(`imprimir_checklist_a4_${osId}`, String(checkinData?.imprimir_checklist_a4 ?? true));
+
       // Fazer o upload das fotos de check-in para o Storage e salvar as URLs na coluna fotos_checkin
       const FOTOS_LABELS = ["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"];
       const urlsFotos: { label: string; url: string }[] = [];
-      const osId = (novaOS as any).id;
 
       for (let i = 0; i < fotosCheckin.length; i++) {
         const foto = fotosCheckin[i];
@@ -1888,90 +1906,110 @@ export default function NovaOrdemServico() {
 
       {/* ==================== BOTÃO CHECKLIST ==================== */}
       {checkinData?.checklist && (
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5">
-              <CheckCircle2 size={18} />
-              Check do Veículo
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Wrench size={18} className="text-primary" />
-                Check do Veículo
-              </DialogTitle>
-              {(placa || cliente?.nome_completo) && (
-                <p className="text-sm text-muted-foreground">
-                  {placa && <span className="font-semibold">{placa}</span>}
-                  {placa && cliente?.nome_completo && " • "}
-                  {cliente?.nome_completo}
-                </p>
-              )}
-            </DialogHeader>
-            <div className="space-y-3 mt-2">
-              {checkinData.checklist.map((cat) => {
-                const preenchidos = cat.itens.filter((i) => i.estado !== "");
-                if (preenchidos.length === 0) return null;
-                return (
-                  <div key={cat.categoria} className="border rounded-lg overflow-hidden">
-                    <div className="bg-muted/50 px-3 py-1.5">
-                      <span className="text-xs font-bold tracking-wide">{cat.categoria}</span>
-                    </div>
-                    <div className="px-3 py-2 space-y-1">
-                      {preenchidos.map((item) => (
-                        <div key={item.label} className="flex items-center justify-between text-sm">
-                          <span>{item.label}</span>
-                          {item.estado === "bom" ? (
-                            <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/15">
-                              <CheckCircle2 className="h-3 w-3 mr-1" /> Bom
-                            </Badge>
-                          ) : (
-                            <Badge variant="destructive" className="gap-1">
-                              <AlertTriangle className="h-3 w-3" /> Substituir
-                            </Badge>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-              {checkinData.checklist.every((cat) => cat.itens.every((i) => i.estado === "")) && (
-                <p className="text-center text-muted-foreground text-sm py-6">Nenhum item foi preenchido.</p>
-              )}
-              {checkinData.observacoes_checkin && (
-                <div className="border rounded-lg p-3">
-                  <span className="text-xs font-bold tracking-wide">OBSERVAÇÕES DO CHECK-IN</span>
-                  <p className="text-sm mt-1 text-muted-foreground">{checkinData.observacoes_checkin}</p>
-                </div>
-              )}
-
-              {fotosCheckin.some(Boolean) && (
-                <div className="border rounded-lg p-3">
-                  <span className="text-xs font-bold tracking-wide block mb-2">FOTOS DO CHECK-IN</span>
-                  <div className="grid grid-cols-4 gap-2">
-                    {fotosCheckin.map((foto, idx) => {
-                      if (!foto) return null;
-                      const FOTOS_LABELS = ["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"];
-                      const label = FOTOS_LABELS[idx];
-                      const isUrl = typeof foto === "string";
-                      const imgSrc = isUrl ? (foto as string) : URL.createObjectURL(foto as File);
-                      return (
-                        <div key={idx} className="relative aspect-square rounded overflow-hidden border bg-muted group cursor-pointer" onClick={() => window.open(imgSrc, "_blank")}>
-                          <img src={imgSrc} alt={label} className="w-full h-full object-cover" />
-                          <div className="absolute bottom-0 left-0 right-0 bg-background/80 py-0.5 text-center text-[9px] font-bold text-foreground truncate px-1">
-                            {label}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card border border-border p-3.5 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Wrench size={18} className="text-primary" />
+            <div>
+              <p className="text-sm font-semibold">Check do Veículo (Checklist de Entrada)</p>
+              <p className="text-xs text-muted-foreground">{fotosCheckin.filter(Boolean).length} fotos adicionadas</p>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="flex items-center gap-2 cursor-pointer bg-secondary/20 hover:bg-secondary/40 border border-border/80 px-3 py-2 rounded-md text-xs transition-colors">
+              <input
+                type="checkbox"
+                checked={imprimirFotosCheckin}
+                onChange={(e) => setImprimirFotosCheckin(e.target.checked)}
+                className="w-4 h-4 rounded text-primary focus:ring-primary"
+              />
+              <span className="font-semibold text-foreground">Imprimir fotos na OS</span>
+            </label>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Eye size={18} />
+                  Visualizar Checklist
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Wrench size={18} className="text-primary" />
+                    Check do Veículo
+                  </DialogTitle>
+                  {(placa || cliente?.nome_completo) && (
+                    <p className="text-sm text-muted-foreground">
+                      {placa && <span className="font-semibold">{placa}</span>}
+                      {placa && cliente?.nome_completo && " • "}
+                      {cliente?.nome_completo}
+                    </p>
+                  )}
+                </DialogHeader>
+                <div className="space-y-3 mt-2">
+                  {checkinData.checklist.map((cat) => {
+                    const preenchidos = cat.itens.filter((i) => i.estado !== "");
+                    if (preenchidos.length === 0) return null;
+                    return (
+                      <div key={cat.categoria} className="border rounded-lg overflow-hidden">
+                        <div className="bg-muted/50 px-3 py-1.5">
+                          <span className="text-xs font-bold tracking-wide">{cat.categoria}</span>
+                        </div>
+                        <div className="px-3 py-2 space-y-1">
+                          {preenchidos.map((item) => (
+                            <div key={item.label} className="flex items-center justify-between text-sm">
+                              <span>{item.label}</span>
+                              {item.estado === "bom" ? (
+                                <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/15">
+                                  <CheckCircle2 className="h-3 w-3 mr-1" /> Bom
+                                </Badge>
+                              ) : (
+                                <Badge variant="destructive" className="gap-1">
+                                  <AlertTriangle className="h-3 w-3" /> Substituir
+                                </Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {checkinData.checklist.every((cat) => cat.itens.every((i) => i.estado === "")) && (
+                    <p className="text-center text-muted-foreground text-sm py-6">Nenhum item foi preenchido.</p>
+                  )}
+                  {checkinData.observacoes_checkin && (
+                    <div className="border rounded-lg p-3">
+                      <span className="text-xs font-bold tracking-wide">OBSERVAÇÕES DO CHECK-IN</span>
+                      <p className="text-sm mt-1 text-muted-foreground">{checkinData.observacoes_checkin}</p>
+                    </div>
+                  )}
+
+                  {fotosCheckin.some(Boolean) && (
+                    <div className="border rounded-lg p-3">
+                      <span className="text-xs font-bold tracking-wide block mb-2">FOTOS DO CHECK-IN</span>
+                      <div className="grid grid-cols-4 gap-2">
+                        {fotosCheckin.map((foto, idx) => {
+                          if (!foto) return null;
+                          const FOTOS_LABELS = ["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"];
+                          const label = FOTOS_LABELS[idx];
+                          const isUrl = typeof foto === "string";
+                          const imgSrc = isUrl ? (foto as string) : URL.createObjectURL(foto as File);
+                          return (
+                            <div key={idx} className="relative aspect-square rounded overflow-hidden border bg-muted group cursor-pointer" onClick={() => window.open(imgSrc, "_blank")}>
+                              <img src={imgSrc} alt={label} className="w-full h-full object-cover" />
+                              <div className="absolute bottom-0 left-0 right-0 bg-background/80 py-0.5 text-center text-[9px] font-bold text-foreground truncate px-1">
+                                {label}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
       )}
 
       {/* ==================== OBSERVAÇÕES ==================== */}
@@ -2014,10 +2052,18 @@ export default function NovaOrdemServico() {
           Cancelar
         </Button>
 
-        <Button onClick={salvarOS} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white px-8">
-          {saving ? <Loader2 size={20} className="mr-2 animate-spin" /> : <CheckCircle size={20} className="mr-2" />}
-          Salvar OS
-        </Button>
+        {(() => {
+          const diferenca = pagamento.gerar_condicoes
+            ? Math.abs(pagamento.parcelas.reduce((s, p) => s + (p.valor || 0), 0) - totais.total)
+            : 0;
+          const hasDiferenca = pagamento.gerar_condicoes && (pagamento.parcelas.length === 0 || diferenca > 0.01);
+          return (
+            <Button onClick={salvarOS} disabled={saving || hasDiferenca} className={hasDiferenca ? "bg-muted text-muted-foreground px-8" : "bg-green-600 hover:bg-green-700 text-white px-8"}>
+              {saving ? <Loader2 size={20} className="mr-2 animate-spin" /> : <CheckCircle size={20} className="mr-2" />}
+              {saving ? "Salvando..." : hasDiferenca ? "Acerte o Pagamento" : "Salvar OS"}
+            </Button>
+          );
+        })()}
       </div>
     </div>
   );

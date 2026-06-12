@@ -4,7 +4,7 @@ import { Plus, Search, Filter, Wrench, Car, User, Clock, Camera, Eye, ChevronDow
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { printOS } from "@/lib/printOS";
+import { printOS, printOSCupom } from "@/lib/printOS";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -836,10 +836,22 @@ export default function OrdensServico() {
                                 <Printer className="h-4 w-4 mr-2" /> Imprimir
                               </DropdownMenuSubTrigger>
                               <DropdownMenuSubContent>
-                                <DropdownMenuItem onClick={() => printOS(os.id)}>
-                                  <FileText className="h-4 w-4 mr-2" /> Formato A4
+                                <DropdownMenuSub>
+                                  <DropdownMenuSubTrigger className="h-8">
+                                    <FileText className="h-4 w-4 mr-2" /> Formato A4
+                                  </DropdownMenuSubTrigger>
+                                  <DropdownMenuSubContent>
+                                    <DropdownMenuItem onClick={() => printOS(os.id, true)}>
+                                      Com Checklist
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => printOS(os.id, false)}>
+                                      Sem Checklist
+                                    </DropdownMenuItem>
+                                  </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+                                <DropdownMenuItem onClick={() => printOSCupom(os.id)}>
+                                  <Receipt className="h-4 w-4 mr-2" /> Cupom
                                 </DropdownMenuItem>
-                                <DropdownMenuItem><Receipt className="h-4 w-4 mr-2" /> Cupom</DropdownMenuItem>
                                 <DropdownMenuItem><Tag className="h-4 w-4 mr-2" /> Etiqueta</DropdownMenuItem>
                                 <DropdownMenuItem><Factory className="h-4 w-4 mr-2" /> Produção</DropdownMenuItem>
                               </DropdownMenuSubContent>

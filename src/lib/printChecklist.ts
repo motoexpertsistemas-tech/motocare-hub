@@ -16,9 +16,19 @@ interface PrintChecklistParams {
   placa?: string;
   clienteNome?: string;
   numeroOS?: string;
+  fotos?: (File | string | null)[];
+  imprimirFotos?: boolean;
 }
 
-export async function printChecklist({ checklist, observacoes, placa, clienteNome, numeroOS }: PrintChecklistParams) {
+export async function printChecklist({ 
+  checklist, 
+  observacoes, 
+  placa, 
+  clienteNome, 
+  numeroOS,
+  fotos,
+  imprimirFotos = true
+}: PrintChecklistParams) {
   // Fetch company info
   const { data: loja } = await supabase.from("configuracoes_loja").select("*").limit(1).maybeSingle();
 
@@ -53,6 +63,32 @@ export async function printChecklist({ checklist, observacoes, placa, clienteNom
     `;
   }).filter(Boolean).join("");
 
+  let fotosHtml = "";
+  if (imprimirFotos !== false && Array.isArray(fotos) && fotos.some(f => f !== null)) {
+    const FOTOS_LABELS = ["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"];
+    fotosHtml = `
+      <div class="section" style="page-break-inside:avoid; margin-top:10px">
+        <div class="section-title">Fotos do Check-in</div>
+        <div class="section-body" style="padding:8px">
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px">
+            ${fotos.map((f, idx) => {
+              if (!f) return "";
+              const label = FOTOS_LABELS[idx];
+              const isUrl = typeof f === "string";
+              const src = isUrl ? (f as string) : URL.createObjectURL(f as File);
+              return `
+                <div style="text-align:center; border:1px solid #e5e7eb; border-radius:4px; padding:3px; background:#f8f9fa">
+                  <img src="${src}" style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:2px" />
+                  <div style="font-size:8px; font-weight:600; color:#555; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${label}</div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Check do Veículo${numeroOS ? ` - OS ${numeroOS}` : ""}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
@@ -82,7 +118,7 @@ export async function printChecklist({ checklist, observacoes, placa, clienteNom
   .obs p{font-size:11px;color:#444}
   .footer{margin-top:20px;border-top:2px solid #e5e7eb;padding-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center}
   .footer .sig{border-top:1px solid #333;padding-top:4px;margin-top:40px;font-size:11px}
-  @media print{body{padding:15px 20px}@page{margin:10mm}}
+  @media print{body{padding:15px 20px}@page{margin:10mm}.section{page-break-inside:avoid}}
 </style></head><body>
 
 <div class="header">
@@ -121,6 +157,8 @@ ${observacoes ? `<div class="obs"><h4>Observações do Check-in</h4><p>${observa
   <span class="bom">✓ Bom: ${totalBom}</span>
   <span class="sub">⚠ Substituir: ${totalSubstituir}</span>
 </div>
+
+${fotosHtml}
 
 <div class="footer">
   <div><div class="sig">Mecânico Responsável</div></div>
