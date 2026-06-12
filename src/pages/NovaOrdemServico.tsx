@@ -76,21 +76,24 @@ export default function NovaOrdemServico() {
   const [checkinData, setCheckinData] = useState<CheckinData | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const formatPhone = (v: string) => {
+  const formatPhone = (v: any) => {
     if (!v) return "";
-    const n = v.replace(/\D/g, "").slice(0, 11);
+    const str = String(v);
+    const n = str.replace(/\D/g, "").slice(0, 11);
     if (n.length <= 2) return n;
     if (n.length <= 7) return `${n.slice(0, 2)}-${n.slice(2)}`;
     return `${n.slice(0, 2)}-${n.slice(2, 7)}-${n.slice(7)}`;
   };
-  const formatCPF = (v: string) => {
+  const formatCPF = (v: any) => {
     if (!v) return "";
-    const n = v.replace(/\D/g, "").slice(0, 11);
+    const str = String(v);
+    const n = str.replace(/\D/g, "").slice(0, 11);
     return n.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
   };
-  const formatCNPJ = (v: string) => {
+  const formatCNPJ = (v: any) => {
     if (!v) return "";
-    const n = v.replace(/\D/g, "").slice(0, 14);
+    const str = String(v);
+    const n = str.replace(/\D/g, "").slice(0, 14);
     return n.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
   };
 
@@ -1995,7 +1998,17 @@ export default function NovaOrdemServico() {
                           const FOTOS_LABELS = ["Frente", "Traseira", "Lateral Esq.", "Lateral Dir.", "Outros 1", "Outros 2", "Outros 3", "Outros 4"];
                           const label = FOTOS_LABELS[idx];
                           const isUrl = typeof foto === "string";
-                          const imgSrc = isUrl ? (foto as string) : URL.createObjectURL(foto as File);
+                          let imgSrc = "";
+                          if (isUrl) {
+                            imgSrc = foto as string;
+                          } else {
+                            try {
+                              imgSrc = URL.createObjectURL(foto as File);
+                            } catch (err) {
+                              console.error("Erro ao criar URL da foto:", err);
+                              return null;
+                            }
+                          }
                           return (
                             <div key={idx} className="relative aspect-square rounded overflow-hidden border bg-muted group cursor-pointer" onClick={() => window.open(imgSrc, "_blank")}>
                               <img src={imgSrc} alt={label} className="w-full h-full object-cover" />
