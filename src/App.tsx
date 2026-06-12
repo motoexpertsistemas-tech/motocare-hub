@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AppLayout } from "./components/AppLayout";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
@@ -178,7 +179,8 @@ const App = () => {
   }, []);
 
   return (
-  <QueryClientProvider client={queryClient}>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
     <EmpresaProvider>
     <BranchProvider>
     <EcommerceAuthProvider>
@@ -366,6 +368,7 @@ const App = () => {
     </BranchProvider>
     </EmpresaProvider>
    </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
