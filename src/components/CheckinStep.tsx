@@ -597,41 +597,41 @@ export function CheckinStep({ onContinue, onBack, clienteNome, placa }: CheckinS
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground"
+                  className="w-full min-h-[44px] md:min-h-[48px] h-auto py-2 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground whitespace-normal leading-tight"
                   onClick={startCamera}
                 >
-                  <Camera className="h-4 w-4" /> Tirar Foto Com WebCam
+                  <Camera className="h-4 w-4 shrink-0" /> Tirar Foto Com WebCam
                 </Button>
               )}
               
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground"
+                className="w-full min-h-[44px] md:min-h-[48px] h-auto py-2 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground whitespace-normal leading-tight"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <Upload className="h-4 w-4" /> Enviar Foto do Computador
+                <Upload className="h-4 w-4 shrink-0" /> Enviar Foto do Computador
               </Button>
 
               <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground"
+                  className="w-full min-h-[44px] md:min-h-[48px] h-auto py-2 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground whitespace-normal leading-tight"
                   onClick={clearPhoto}
                   disabled={!tempPhoto && !cameraActive}
                 >
-                  <X className="h-4 w-4" /> Limpar Foto
+                  <X className="h-4 w-4 shrink-0" /> Limpar Foto
                 </Button>
 
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full h-11 md:h-12 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground"
+                  className="w-full min-h-[44px] md:min-h-[48px] h-auto py-2 gap-2 text-xs md:text-sm font-semibold border-border bg-background hover:bg-secondary/20 text-foreground whitespace-normal leading-tight"
                   onClick={downloadPhoto}
                   disabled={!tempPhoto}
                 >
-                  <Upload className="h-4 w-4 rotate-180" /> Baixar Foto
+                  <Download className="h-4 w-4 shrink-0" /> Baixar Foto
                 </Button>
               </div>
             </div>
