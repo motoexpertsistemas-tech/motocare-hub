@@ -10,10 +10,11 @@ import { toast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RevisoesAgendadas from "./os/RevisoesAgendadas";
 
-const STATUS_AGENDA = ["agendada", "AGENDAMENTO", "em_execucao", "aguardando_pecas", "pronta"];
+const STATUS_AGENDA = ["agendada", "agendamento", "AGENDAMENTO", "em_execucao", "aguardando_pecas", "pronta"];
 
 const STATUS_LABELS: Record<string, string> = {
   agendada: "Agendada",
+  agendamento: "Agendamento",
   AGENDAMENTO: "Agendamento",
   em_execucao: "Em Execução",
   aguardando_pecas: "Aguardando Peças",
@@ -22,6 +23,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   agendada: "bg-blue-500",
+  agendamento: "bg-blue-500",
   AGENDAMENTO: "bg-blue-500",
   em_execucao: "bg-red-500",
   aguardando_pecas: "bg-amber-500",
