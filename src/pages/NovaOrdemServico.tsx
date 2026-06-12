@@ -77,16 +77,19 @@ export default function NovaOrdemServico() {
   const [saving, setSaving] = useState(false);
 
   const formatPhone = (v: string) => {
+    if (!v) return "";
     const n = v.replace(/\D/g, "").slice(0, 11);
     if (n.length <= 2) return n;
     if (n.length <= 7) return `${n.slice(0, 2)}-${n.slice(2)}`;
     return `${n.slice(0, 2)}-${n.slice(2, 7)}-${n.slice(7)}`;
   };
   const formatCPF = (v: string) => {
+    if (!v) return "";
     const n = v.replace(/\D/g, "").slice(0, 11);
     return n.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
   };
   const formatCNPJ = (v: string) => {
+    if (!v) return "";
     const n = v.replace(/\D/g, "").slice(0, 14);
     return n.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
   };
