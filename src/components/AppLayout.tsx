@@ -175,6 +175,7 @@ const navItems: NavItem[] = [
     children: [
       { label: "Gerenciar O.S.", path: "/os", icon: ClipboardList },
       { label: "Situações", path: "/os/situacoes", icon: Settings },
+      { label: "Quiosque", path: "/quiosque", icon: Monitor },
     ],
   },
   {
@@ -269,7 +270,6 @@ const navItems: NavItem[] = [
   },
   { icon: Shield, label: "Auditoria", path: "/auditoria", roles: ["ADMIN"] },
   { icon: Fingerprint, label: "LGPD & Segurança", path: "/lgpd", roles: ["ADMIN"] },
-  { icon: Monitor, label: "Quiosque", path: "/quiosque", roles: ["ADMIN", "MECÂNICO"] },
   { icon: Settings, label: "Configurações", path: "/config", roles: ["ADMIN"] },
 ];
 
